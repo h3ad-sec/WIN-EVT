@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WIN-EVT: Windows Event ID Reference</title>
+  <meta name="description" content="Deep-dive reference for Windows Security and PowerShell event IDs SOC analysts triage daily: annotated sample logs, attack-scenario examples, KQL detection queries, investigation steps, and MITRE ATT&amp;CK mapping." />
+  <link rel="canonical" href="https://h3ad-sec.github.io/WIN-EVT/" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="H3AD-SEC" />
+  <meta property="og:url" content="https://h3ad-sec.github.io/WIN-EVT/" />
+  <meta property="og:title" content="WIN-EVT: Windows Event ID Reference" />
+  <meta property="og:description" content="Deep-dive reference for Windows Security and PowerShell event IDs SOC analysts triage daily: annotated sample logs, attack-scenario examples, KQL detection queries, investigation steps, and MITRE ATT&amp;CK mapping." />
+  <meta property="og:image" content="https://raw.githubusercontent.com/h3ad-sec/h3ad-sec.github.io/main/logo-dark.png" />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="WIN-EVT: Windows Event ID Reference" />
+  <meta name="twitter:description" content="Deep-dive reference for Windows Security and PowerShell event IDs SOC analysts triage daily: annotated sample logs, attack-scenario examples, KQL detection queries, investigation steps, and MITRE ATT&amp;CK mapping." />
+  <meta name="twitter:image" content="https://raw.githubusercontent.com/h3ad-sec/h3ad-sec.github.io/main/logo-dark.png" />
+
+  <meta name="theme-color" content="#080c14" />
+  <link rel="icon" href="https://h3ad-sec.github.io/fevicon.png?v=2026" type="image/png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;500;600;700&family=Share+Tech+Mono&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "WIN-EVT",
+    "description": "Deep-dive reference for Windows Security and PowerShell event IDs: annotated sample logs, attack-scenario examples, KQL detection queries, investigation steps, and MITRE ATT&CK mapping.",
+    "url": "https://h3ad-sec.github.io/WIN-EVT/",
+    "applicationCategory": "SecurityApplication",
+    "operatingSystem": "Any",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "publisher": { "@type": "Organization", "name": "H3AD-SEC", "url": "https://h3ad-sec.github.io" }
+  }
+  </script>
+<style>
+:root{
+  --bg:#080c14;--panel:#0d1117;--panel-alt:#111827;--surface:#18253a;--surface-highlight:#1e293b;
+  --text:#e6edf3;--text-dim:#96b0cc;--muted:#8b949e;--dim:#7c8aa5;--muted-dim:#3a5470;
+  --accent:#00d4ff;--primary:#00d4ff;--accent2:#58a6ff;
+  --border:#1e2d3d;--border-strong:#24384c;--border-soft:#16212e;--border-dim:#16212e;
+  --status-live:#00d4ff;--status-partial:#f59e0b;--status-soon:#2d3748;
+  --nav-h:48px;
+  --mono:'Share Tech Mono',monospace;--ui:'IBM Plex Sans',sans-serif;--font-cond:'Share Tech Mono',monospace;--fs-xs:11px;
+  --radius-lg:10px;--shadow-sm:0 1px 2px rgba(0,0,0,.35);--ease:cubic-bezier(.2,.7,.3,1);
+}
+body.light{
+  --bg:#f8fafc;--panel:#ffffff;--panel-alt:#f1f5f9;--surface:#e7ecf3;--surface-highlight:#dbe4f0;
+  --text:#0d1117;--text-dim:#33445c;--muted:#5c6b8a;--dim:#5f7189;--muted-dim:#5c7a9a;
+  --accent:#0284c7;--primary:#0284c7;--accent2:#2563a8;
+  --border:#e2e8f0;--border-strong:#c8d4e4;--border-soft:#edf1f6;--border-dim:#c8d8ec;
+  --status-live:#0284c7;--status-partial:#d97706;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+a:focus-visible,button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:3px;}
+body{background:var(--bg);color:var(--text);font-family:'Exo 2',sans-serif;font-size:14px;line-height:1.6;
+  min-height:100vh;transition:background .25s,color .25s;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse 80% 45% at 50% 0%,rgba(0,212,255,.055) 0%,transparent 100%),
+             radial-gradient(ellipse 50% 35% at 5% 100%,rgba(0,212,255,.04) 0%,transparent 100%);}
+body.light::before{background:radial-gradient(ellipse 80% 45% at 50% 0%,rgba(2,132,199,.05) 0%,transparent 100%),
+             radial-gradient(ellipse 50% 35% at 5% 100%,rgba(37,99,235,.03) 0%,transparent 100%);}
+a{color:var(--accent);text-decoration:none;}
+a:hover{opacity:.8;}
+* { scrollbar-width:thin; scrollbar-color:var(--border-strong) transparent; }
+::-webkit-scrollbar{width:9px;height:9px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:20px;border:2px solid transparent;background-clip:content-box;}
+
+/* ── NAV ── */
+.nav{position:fixed;top:0;left:0;right:0;z-index:100;background:var(--panel);border-bottom:1px solid var(--border);
+  height:var(--nav-h);display:flex;align-items:center;padding:0 1.25rem;transition:background .3s,border-color .3s;}
+.nav-brand{display:flex;align-items:center;flex-shrink:0;margin-right:1rem;}
+.nav-brand img{height:22px;width:auto;vertical-align:middle;}
+.xv-nav-pill{display:flex;flex-direction:column;align-items:flex-start;gap:1px;margin-left:0;padding-left:10px;
+  border-left:1px solid var(--border);white-space:nowrap;flex-shrink:0;text-decoration:none;}
+.xv-pill-name{font-family:'Exo 2',sans-serif;font-weight:700;font-size:13px;letter-spacing:3px;line-height:1;}
+.xv-pill-accent{color:var(--accent);}
+.xv-pill-text{color:var(--text);}
+.xv-pill-tagline{font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:1.5px;}
+.nav-links{position:absolute;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:2px;}
+.nav-links a{font-family:'Exo 2',sans-serif;font-weight:500;font-size:var(--fs-xs);color:var(--muted);text-decoration:none;padding:5px 8px;
+  border-radius:4px;border:1px solid transparent;white-space:nowrap;transition:all .15s;}
+.nav-links a:hover{color:var(--accent);border-color:var(--border);background:rgba(0,212,255,.04);}
+.nav-links a.nav-current{color:var(--accent);border:1px solid var(--border);}
+.nav-divider{width:1px;height:18px;background:var(--border);margin:0 4px;flex-shrink:0;}
+.nav-right{margin-left:auto;flex-shrink:0;padding-left:1rem;}
+.theme-toggle{cursor:pointer;}
+.toggle-track{width:44px;height:22px;background:var(--border);border-radius:50px;position:relative;}
+.toggle-thumb{width:16px;height:16px;background:var(--accent);border-radius:50%;position:absolute;top:3px;left:3px;
+  transition:transform .3s;box-shadow:0 0 6px var(--accent);}
+body.light .toggle-thumb{transform:translateX(22px);}
+.hamburger{display:flex;flex-direction:column;justify-content:center;gap:4px;cursor:pointer;padding:6px;margin-right:8px;flex-shrink:0;}
+.hamburger span{display:block;width:20px;height:2px;background:var(--muted);border-radius:2px;}
+.nav-item{position:relative;display:flex;align-items:center;}
+.nav-dropdown{display:none;position:absolute;top:100%;left:0;min-width:140px;padding-top:6px;z-index:200;}
+.nav-dropdown-inner{background:var(--panel);border:1px solid var(--border);border-radius:4px;overflow:hidden;}
+.nav-item:hover .nav-dropdown{display:block;}
+.nav-links .nav-dropdown a{display:block;padding:7px 12px;font-family:var(--ui);font-size:var(--fs-xs);color:var(--muted);
+  border:none;border-left:2px solid transparent;border-radius:0;transition:.15s;}
+.nav-links .nav-dropdown a:hover,.nav-links .nav-dropdown a.nav-current{color:var(--accent);border-left-color:var(--accent);background:rgba(0,212,255,.04);}
+.nav-drawer{display:none;position:fixed;top:var(--nav-h);left:0;right:0;background:var(--panel);border-bottom:1px solid var(--border);
+  z-index:99;padding:.75rem 1.25rem 1rem;flex-direction:column;gap:2px;max-height:calc(100vh - var(--nav-h));overflow-y:auto;}
+.nav-drawer.open{display:flex;}
+.nav-drawer a{font-family:var(--ui);font-size:13px;color:var(--text-dim);text-decoration:none;padding:8px 10px;
+  border-radius:4px;border-left:2px solid transparent;transition:.15s;}
+.nav-drawer a:hover{color:var(--accent);border-left-color:var(--accent);background:rgba(0,212,255,.04);}
+.nav-drawer a.nav-current{color:var(--accent);}
+.drawer-sub{padding-left:1.8rem !important;font-size:11px !important;opacity:.8;}
+.nav-links{display:none!important;}
+.hamburger{display:flex!important;}
+@media(max-width:380px){.xv-pill-tagline{display:none;}.nav-brand{margin-right:.5rem;}.nav{padding:0 .75rem;}.nav-right{padding-left:.5rem;}}
+
+/* ── App shell ── */
+.we-app{position:relative;z-index:1;padding-top:var(--nav-h);min-height:100dvh;min-width:0;display:flex;flex-direction:column;font-family:var(--ui);}
+
+/* ── Toolbar ── */
+.we-toolbar{position:sticky;top:var(--nav-h);z-index:40;display:flex;align-items:center;gap:14px;height:52px;padding:0 20px;
+  background:linear-gradient(180deg,var(--panel-alt) 0%,var(--panel) 100%);border-bottom:1px solid var(--border);box-shadow:var(--shadow-sm);flex-shrink:0;}
+.we-search{flex:2 1 auto;max-width:920px;position:relative;}
+.we-search input{width:100%;height:40px;padding:0 42px 0 40px;background:var(--bg);border:1px solid var(--border);
+  border-radius:7px;color:var(--text);font-family:var(--mono);font-size:14px;outline:none;transition:.14s;}
+.we-search input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,212,255,.12);}
+.we-search input::placeholder{color:var(--dim);}
+.we-search .glyph{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--accent);pointer-events:none;}
+.we-search .glyph svg{width:16px;height:16px;}
+.we-search .hint{position:absolute;right:11px;top:50%;transform:translateY(-50%);}
+.we-search kbd{font-family:var(--mono);font-size:10px;border:1px solid var(--border);border-radius:4px;padding:1px 5px;color:var(--dim);}
+.we-stat-strip{flex:0 1 auto;display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;color:var(--muted);
+  flex-wrap:wrap;min-width:0;overflow:hidden;margin-left:auto;padding-left:16px;}
+.we-stat-strip b{color:var(--accent);font-weight:700;}
+.we-stat-sep{color:var(--border-strong);}
+.we-kbd-hint{display:inline-flex;align-items:center;gap:4px;color:var(--dim);}
+.we-kbd-hint kbd{font-family:var(--mono);font-size:9.5px;border:1px solid var(--border);border-radius:4px;
+  padding:1px 5px;color:var(--muted);background:var(--panel);line-height:1.4;}
+@media(max-width:1150px){.we-kbd-hint{display:none;}}
+@media(max-width:900px){.we-stat-strip{display:none;}.we-search{flex:0 1 480px;max-width:480px;}}
+@media(max-width:680px){
+  .we-toolbar{flex-wrap:wrap;height:auto;padding:8px 14px;row-gap:8px;}
+  .we-search{order:1;flex:1 1 100%;max-width:none;}
+  .we-search input{height:42px;font-size:16px;padding:0 40px 0 38px;}
+  .we-search .hint{display:none;}
+}
+
+
+/* ── Filter bar ── */
+.we-filterbar{display:flex;align-items:center;gap:18px;padding:10px 20px;border-bottom:1px solid var(--border-soft);
+  background:var(--panel-alt);flex-wrap:wrap;flex-shrink:0;row-gap:10px;}
+.we-filter-group{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.we-filter-group-label{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);white-space:nowrap;}
+.we-chip{font-family:var(--font-cond);font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+  padding:6px 14px;border:1px solid var(--border);border-radius:20px;color:var(--muted);background:transparent;cursor:pointer;
+  transition:background .16s var(--ease),border-color .16s var(--ease),color .16s var(--ease);}
+.we-chip:hover{color:var(--text);border-color:var(--dim);background:var(--panel);}
+.we-chip.active{border-color:var(--chip-color,var(--accent));background:color-mix(in srgb, var(--chip-color,var(--accent)) 16%, transparent);
+  color:var(--text);box-shadow:0 0 0 1px color-mix(in srgb, var(--chip-color,var(--accent)) 30%, transparent);}
+.we-chip .dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:middle;}
+.we-select{font-family:var(--font-cond);font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;
+  padding:7px 30px 7px 12px;border:1px solid var(--border);border-radius:6px;color:var(--text);background:var(--panel);
+  cursor:pointer;min-width:150px;}
+.we-select:focus{border-color:var(--accent);outline:none;}
+.we-result-count{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--dim);white-space:nowrap;}
+@media(max-width:700px){.we-result-count{display:none;}}
+.we-sort-select{font-family:var(--font-cond);font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;
+  padding:6px 26px 6px 10px;border:1px solid var(--border);border-radius:6px;color:var(--muted);background:var(--panel);cursor:pointer;}
+.we-sort-select:focus{border-color:var(--accent);outline:none;}
+
+/* ── Card grid ── */
+.we-card-scroll{flex:1;overflow:auto;min-height:0;padding:16px 20px 32px;}
+.we-card-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;}
+@media(max-width:1200px){.we-card-grid{grid-template-columns:repeat(3,minmax(0,1fr));}}
+@media(max-width:860px){.we-card-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
+.we-card{position:relative;background:
+    linear-gradient(155deg, color-mix(in srgb, var(--row-color,var(--accent)) 20%, var(--panel)) 0%, var(--panel) 56%);
+  border:1px solid var(--border-soft);border-top:4px solid var(--row-color,var(--accent));border-radius:9px;
+  padding:14px 16px;cursor:pointer;text-align:left;font-family:var(--ui);display:flex;flex-direction:column;
+  gap:10px;min-width:0;transition:background .18s,border-color .18s,box-shadow .18s,transform .14s;}
+.we-card:hover{background:
+    linear-gradient(155deg, color-mix(in srgb, var(--row-color,var(--accent)) 32%, var(--panel)) 0%, var(--panel) 60%);
+  border-color:var(--border-strong);transform:translateY(-2px);
+  box-shadow:0 8px 20px -6px color-mix(in srgb, var(--row-color,var(--accent)) 45%, transparent), 0 4px 10px rgba(0,0,0,.18);}
+.we-card.active{background:
+    linear-gradient(155deg, color-mix(in srgb, var(--row-color,var(--accent)) 38%, var(--surface)) 0%, var(--surface) 62%);
+  border-color:var(--border-strong);
+  box-shadow:0 0 0 2px var(--row-color,var(--accent)), 0 8px 20px -6px color-mix(in srgb, var(--row-color,var(--accent)) 50%, transparent);}
+.we-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
+.we-card-id{font-family:var(--mono);font-weight:700;font-size:15px;color:var(--text);}
+.we-card-name{font-size:13.5px;font-weight:500;color:var(--text);line-height:1.4;}
+.we-card-foot{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:auto;padding-top:2px;}
+.we-cat-pill{display:inline-flex;align-items:center;font-family:var(--font-cond);font-size:9.5px;font-weight:700;
+  letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;border-radius:4px;padding:3px 8px;}
+.we-prio-pill{display:inline-block;font-family:var(--font-cond);font-size:9px;font-weight:700;letter-spacing:.06em;
+  border-radius:3px;padding:2px 7px;white-space:nowrap;margin-left:auto;}
+.we-src-pill{font-family:var(--mono);font-size:9.5px;font-weight:600;color:var(--text-dim);white-space:nowrap;
+  background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:3px 8px;}
+@media(max-width:480px){.we-card-grid{grid-template-columns:1fr;}}
+@media(max-width:480px){.we-card-grid{grid-template-columns:1fr;}}
+
+/* ── Inspector (slide-in drawer) ── */
+.we-inspector-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;opacity:0;pointer-events:none;transition:opacity .2s;}
+.we-inspector-backdrop.open{opacity:1;pointer-events:auto;}
+.we-inspector{position:fixed;top:var(--nav-h);right:0;bottom:0;width:min(660px,100vw);background:var(--panel-alt);
+  border-left:1px solid var(--border);z-index:201;display:flex;flex-direction:column;
+  transform:translateX(100%);transition:transform .25s var(--ease);box-shadow:-10px 0 34px rgba(0,0,0,.28);}
+.we-inspector.open{transform:translateX(0);}
+.we-inspector-head{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--border-soft);
+  flex-shrink:0;background:var(--panel);}
+.we-inspector-nav{display:flex;gap:4px;}
+.we-inspector-navbtn{background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--muted);
+  width:28px;height:28px;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.we-inspector-navbtn:hover{color:var(--text);border-color:var(--dim);}
+.we-inspector-navbtn:disabled{opacity:.35;cursor:default;}
+.we-inspector-navbtn:disabled:hover{color:var(--muted);border-color:var(--border);}
+.we-inspector-close{background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--muted);
+  width:28px;height:28px;font-size:15px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.we-inspector-close:hover{color:var(--text);border-color:var(--dim);}
+.we-inspector-scroll{flex:1;overflow-y:auto;min-height:0;padding:24px 28px 48px;}
+.we-inspector-inner{animation:weFadeIn .2s var(--ease);}
+@keyframes weFadeIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+@media(prefers-reduced-motion:reduce){.we-inspector-inner{animation:none;}.we-inspector{transition:none;}}
+@media(max-width:680px){
+  .we-inspector{width:100vw;}
+  .we-inspector-scroll{padding:20px 16px 40px;}
+  .we-d-title{font-size:19px;}
+  .we-code-bar{flex-wrap:wrap;row-gap:6px;}
+  .we-code-bar .lbl{flex:1 1 100%;}
+  .we-code-bar button{margin-left:0;}
+  .we-jumpnav{position:static;background:transparent;padding:0 0 4px;}
+}
+@media(max-width:400px){
+  .we-d-title{font-size:18px;}
+  .we-d-eyebrow{font-size:10.5px;}
+  .we-chip{font-size:10px;padding:5px 11px;}
+  .we-inspector-scroll{padding:16px 12px 36px;}
+  .we-code pre{font-size:12px;padding:12px;}
+}
+
+/* ── Detail content (rendered inside the inspector) ── */
+.we-d-info{border:1px solid var(--border);border-top:3px solid var(--cat-color,var(--accent));border-radius:var(--radius-lg);
+  background:var(--surface);padding:20px;margin-bottom:24px;box-shadow:var(--shadow-sm);}
+.we-d-eyebrow{font-family:var(--font-cond);font-size:11px;letter-spacing:.15em;font-weight:600;text-transform:uppercase;margin-bottom:10px;}
+.we-d-title{font-size:22px;font-weight:600;letter-spacing:-.02em;line-height:1.3;margin-bottom:14px;font-family:var(--mono);}
+.we-d-meta{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;}
+.we-pill{font-size:12px;padding:4px 10px;border:1px solid var(--border);border-radius:5px;color:var(--muted);
+  font-family:var(--mono);display:inline-flex;align-items:center;gap:6px;}
+.we-pill.src{border-color:var(--accent2);color:var(--accent);background:rgba(0,212,255,.06);}
+.we-d-desc{color:var(--muted);font-size:14px;line-height:1.62;max-width:70ch;}
+
+.we-jumpnav{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:26px;position:sticky;top:0;background:var(--panel-alt);
+  padding:10px 0;z-index:3;}
+.we-jumpchip{font-family:var(--font-cond);font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  padding:5px 11px;border:1px solid var(--border);border-radius:14px;color:var(--muted);background:var(--panel);
+  cursor:pointer;transition:all .14s;white-space:nowrap;}
+.we-jumpchip:hover{color:var(--text);border-color:var(--accent);background:color-mix(in srgb, var(--accent) 8%, var(--panel));}
+
+.we-d-sec{margin-bottom:24px;}
+.we-d-sec-h{display:flex;align-items:center;gap:10px;margin-bottom:10px;font-family:var(--font-cond);font-size:11px;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--dim);font-weight:600;}
+
+.we-kf-list{display:flex;flex-direction:column;gap:10px;}
+.we-kf-item{padding-left:14px;border-left:2px solid var(--border);}
+.we-kf-name{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--cat-color,var(--accent));}
+.we-kf-meaning{font-size:13.5px;color:var(--muted);line-height:1.6;margin-top:2px;}
+
+.we-info-box{border-radius:5px;padding:12px 14px;font-size:13px;line-height:1.65;background:var(--panel-alt);
+  border-left:3px solid var(--accent2);color:var(--text-dim);}
+.we-list-box{border-radius:5px;padding:12px 14px;background:rgba(245,158,11,.06);border-left:3px solid var(--status-partial);}
+.we-list-box li{font-size:13px;color:var(--text-dim);line-height:1.6;padding-left:14px;position:relative;margin-bottom:6px;}
+.we-list-box li:last-child{margin-bottom:0;}
+.we-list-box li::before{content:'\26A0';position:absolute;left:0;color:var(--status-partial);font-size:10px;}
+.we-steps{list-style:none;counter-reset:we-step;display:flex;flex-direction:column;gap:10px;}
+.we-steps li{counter-increment:we-step;position:relative;padding-left:26px;font-size:13px;color:var(--text-dim);line-height:1.55;}
+.we-steps li::before{content:counter(we-step);position:absolute;left:0;top:0;width:18px;height:18px;border-radius:50%;
+  background:rgba(0,212,255,.12);color:var(--accent);font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+.we-fp-list{display:flex;flex-direction:column;gap:8px;}
+.we-fp-list li{font-size:13px;color:var(--text-dim);line-height:1.6;padding-left:16px;position:relative;}
+.we-fp-list li::before{content:'\2713';position:absolute;left:0;color:var(--accent2);font-size:11px;}
+
+.we-code{position:relative;border:1px solid var(--border);border-radius:9px;background:var(--panel);overflow:hidden;}
+.we-code.danger{border-color:color-mix(in srgb, var(--status-partial) 45%, var(--border));}
+.we-code-bar{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border-soft);background:var(--surface);}
+.we-code-bar .lbl{font-family:var(--mono);font-size:10.5px;color:var(--dim);letter-spacing:.05em;}
+.we-code.danger .we-code-bar .lbl{color:var(--status-partial);}
+.we-code-bar button{margin-left:auto;font-family:var(--font-cond);font-size:10.5px;font-weight:600;letter-spacing:.07em;
+  text-transform:uppercase;padding:4px 10px;border:1px solid var(--border);border-radius:5px;color:var(--muted);
+  background:transparent;cursor:pointer;}
+.we-code-bar button:hover{border-color:var(--accent);color:var(--text);}
+.we-code pre{padding:14px 16px;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.7;margin:0;color:var(--text-dim);white-space:pre;}
+.we-scenario{font-size:12.5px;color:var(--muted);line-height:1.6;margin-bottom:10px;padding:8px 12px;background:rgba(245,158,11,.06);
+  border-left:3px solid var(--status-partial);border-radius:4px;}
+
+.we-tags{display:flex;flex-wrap:wrap;gap:6px;}
+.we-tag{font-size:12px;padding:4px 10px;border-radius:5px;background:var(--surface);border:1px solid var(--border-soft);
+  color:var(--muted);font-family:var(--mono);}
+.we-attack-chip{font-family:var(--mono);font-size:10px;color:var(--accent2);background:color-mix(in srgb, var(--accent2) 10%, transparent);
+  border:1px solid color-mix(in srgb, var(--accent2) 25%, transparent);border-radius:2px;padding:4px 9px;letter-spacing:.05em;text-decoration:none;}
+.we-attack-chip:hover{opacity:1;background:color-mix(in srgb, var(--accent2) 18%, transparent);}
+.we-related-chip{font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--bg);border:1px solid var(--border-dim);
+  border-radius:20px;padding:4px 12px;cursor:pointer;transition:all .15s;}
+.we-related-chip:hover{color:var(--accent);border-color:var(--accent);}
+
+.we-state-panel{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:60px 20px;gap:10px;}
+.we-state-title{font-family:var(--mono);font-size:15px;color:var(--text);letter-spacing:.08em;}
+.we-state-desc{font-size:12px;color:var(--muted);max-width:320px;line-height:1.6;}
+.we-loading{font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:.12em;animation:weBlink 1.1s step-end infinite;}
+@keyframes weBlink{50%{opacity:.3;}}
+.we-retry{font-family:var(--mono);font-size:10px;letter-spacing:.08em;background:transparent;color:var(--accent);
+  border:1px solid rgba(0,212,255,.3);border-radius:2px;padding:7px 20px;cursor:pointer;margin-top:4px;}
+
+/* ── Footer ── */
+.tracer-footer{flex-shrink:0;border-top:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;
+  justify-content:space-between;flex-wrap:wrap;gap:.5rem 1.5rem;font-family:var(--ui);font-size:var(--fs-xs);
+  color:var(--muted);letter-spacing:.03em;}
+.footer-left{color:var(--muted);}
+.footer-right{color:var(--muted);text-transform:uppercase;opacity:.85;}
+.footer-credit-row{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;}
+.footer-credit-pill{display:inline-flex;flex-wrap:nowrap;align-items:center;gap:6px;padding:4px 12px;border:1px solid var(--border);
+  border-radius:999px;text-decoration:none;font-family:'Exo 2',sans-serif;font-weight:500;font-size:var(--fs-xs);
+  white-space:nowrap;transition:border-color .15s;}
+.footer-credit-pill:hover{border-color:var(--accent);}
+.footer-credit-pill .credit-tool{font-weight:700;letter-spacing:2px;}
+.footer-credit-pill .credit-by{color:var(--muted);}
+.footer-credit-pill .credit-name{color:var(--accent);font-weight:700;letter-spacing:.5px;}
+@media(max-width:860px){.tracer-footer{flex-direction:column;justify-content:center;text-align:center;gap:.6rem;}.footer-credit-row{justify-content:center;}}
+body.light .footer-left,body.light .footer-right,body.light .footer-credit-pill .credit-by{color:#2E343B;}
+body.light .footer-credit-pill .credit-name{color:#0A6EA8;}
+
+/* ── Light theme: re-tint hardcoded cyan glows/hovers to the light accent ── */
+body.light .nav-links a:hover,
+body.light .nav-links .nav-dropdown a:hover,
+body.light .nav-links .nav-dropdown a.nav-current,
+body.light .nav-drawer a:hover{background:rgba(2,132,199,.05);}
+body.light .we-search input:focus{box-shadow:0 0 0 3px rgba(2,132,199,.12);}
+body.light .we-pill.src{background:rgba(2,132,199,.06);}
+body.light .we-steps li::before{background:rgba(2,132,199,.12);}
+body.light .we-retry{border-color:rgba(2,132,199,.3);}
+body.light .we-retry:hover{background:rgba(2,132,199,.08);}
+body.light .we-code pre{color:var(--text-dim);}
+body.light .we-d-info{box-shadow:0 1px 3px rgba(15,23,42,.06);}
+body.light .we-inspector{box-shadow:-10px 0 34px rgba(15,23,42,.12);}
+body.light .we-inspector-backdrop{background:rgba(15,23,42,.25);}
+  /* H3AD-SEC MENU SYNC: hamburger-only nav */
+.nav-links{display:none!important;}
+.hamburger{display:flex!important;}
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="hamburger" id="hamburger" onclick="toggleDrawer()" role="button" aria-label="Open menu">
+    <span></span><span></span><span></span>
+  </div>
+  <a class="nav-brand" href="https://h3ad-sec.github.io">
+    <img id="navLogo" src="https://raw.githubusercontent.com/h3ad-sec/h3ad-sec.github.io/main/logo-dark.png" alt="H3AD-SEC" />
+  </a>
+  <a class="xv-nav-pill" id="xv-nav-pill" href="https://h3ad-sec.github.io/WIN-EVT/" style="text-decoration:none">
+    <span class="xv-pill-name"><span class="xv-pill-accent">WIN</span><span class="xv-pill-text">-EVT</span></span>
+    <span class="xv-pill-tagline">Know Your Event IDs.</span>
+  </a>
+  <div class="nav-links">
+      <div class="nav-divider"></div>
+      <a href="https://h3ad-sec.github.io/H3AD/">H3AD</a>
+      <div class="nav-divider"></div>
+      <div class="nav-item">
+        <a href="https://h3ad-sec.github.io/H3AD-X/">H3AD-X</a>
+        <div class="nav-dropdown"><div class="nav-dropdown-inner">
+          <a href="https://h3ad-sec.github.io/IOC-VERDIKT/" target="_blank" rel="noopener">IOC-VERDIKT</a>
+          <a href="https://h3ad-sec.github.io/PARSE-X/" target="_blank" rel="noopener">PARSE-X</a>
+          <a href="https://h3ad-sec.github.io/DNSCOPE/" target="_blank" rel="noopener">DNSCOPE</a>
+          <a href="https://h3ad-sec.github.io/X-VERDIKT/" target="_blank" rel="noopener">X-VERDIKT</a>
+          <a href="https://h3ad-sec.github.io/MAILSCOPE/" target="_blank" rel="noopener">MAILSCOPE</a>
+          <a href="https://h3ad-sec.github.io/INFRA-SCOPE/" target="_blank" rel="noopener">INFRA-SCOPE</a>
+        </div></div>
+      </div>
+      <div class="nav-item">
+        <a href="https://h3ad-sec.github.io/H3AD-AI/">H3AD-AI</a>
+        <div class="nav-dropdown"><div class="nav-dropdown-inner">
+          <a href="https://h3ad-sec.github.io/PROMPTVAULT/" target="_blank" rel="noopener">PROMPTVAULT</a>
+        </div></div>
+      </div>
+      <div class="nav-item">
+        <a href="https://h3ad-sec.github.io/H3AD-DETECT/">H3AD-DETECT</a>
+        <div class="nav-dropdown"><div class="nav-dropdown-inner">
+          <a href="https://h3ad-sec.github.io/TRACERULES/" target="_blank" rel="noopener">TRACERULES</a>
+        </div></div>
+      </div>
+      <div class="nav-item">
+        <a href="https://h3ad-sec.github.io/H3AD-HUNT/">H3AD-HUNT</a>
+        <div class="nav-dropdown"><div class="nav-dropdown-inner">
+          <a href="https://h3ad-sec.github.io/HYPOS/" target="_blank" rel="noopener">HYPOS</a>
+          <a href="https://h3ad-sec.github.io/PIVEX/" target="_blank" rel="noopener">PIVEX</a>
+          <a href="https://h3ad-sec.github.io/TRACEPULSE/" target="_blank" rel="noopener">TRACEPULSE</a>
+        </div></div>
+      </div>
+      <div class="nav-item">
+        <a href="https://h3ad-sec.github.io/H3AD-OPS/">H3AD-OPS</a>
+        <div class="nav-dropdown"><div class="nav-dropdown-inner">
+          <a href="https://h3ad-sec.github.io/QUICKTRACE/" target="_blank" rel="noopener">QUICKTRACE</a>
+          <a href="https://h3ad-sec.github.io/PHISHOPS/" target="_blank" rel="noopener">PHISHOPS</a>
+        </div></div>
+      </div>
+      <div class="nav-item">
+        <a href="https://h3ad-sec.github.io/H3AD-DF/">H3AD-DF</a>
+        <div class="nav-dropdown"><div class="nav-dropdown-inner">
+          <a href="https://h3ad-sec.github.io/ARTIFEKTX/" target="_blank" rel="noopener">ARTIFEKTX</a>
+          <a href="https://h3ad-sec.github.io/CHRONIFY/" target="_blank" rel="noopener">CHRONIFY</a>
+          <a href="https://h3ad-sec.github.io/WIN-EVT/" target="_blank" rel="noopener" class="nav-current">WIN-EVT</a>
+        </div></div>
+      </div>
+      <a href="https://h3ad-sec.github.io/H3AD-IR/">H3AD-IR</a>
+      <div class="nav-item">
+        <a href="https://h3ad-sec.github.io/H3AD-LEARN/">H3AD-LEARN</a>
+        <div class="nav-dropdown"><div class="nav-dropdown-inner">
+          <a href="https://h3ad-sec.github.io/H3AD-LEARN/fundamentals/" target="_blank" rel="noopener">FUNDAMENTALS</a>
+          <a href="https://h3ad-sec.github.io/H3AD-LEARN/networking/" target="_blank" rel="noopener">NETWORKING</a>
+          <a href="https://h3ad-sec.github.io/H3AD-LEARN/windows/" target="_blank" rel="noopener">WINDOWS</a>
+          <a href="https://h3ad-sec.github.io/H3AD-LEARN/threat-hunting/" target="_blank" rel="noopener">THREAT HUNTING</a>
+          <a href="https://h3ad-sec.github.io/H3AD-LEARN/lolbas/" target="_blank" rel="noopener">LOLBAS</a>
+          <a href="https://h3ad-sec.github.io/H3AD-LEARN/threat-intel/" target="_blank" rel="noopener">THREAT INTEL</a>
+          <a href="https://h3ad-sec.github.io/H3AD-LEARN/cloud-security/" target="_blank" rel="noopener">CLOUD SECURITY</a>
+          <a href="https://h3ad-sec.github.io/H3AD-LEARN/interview-prep/" target="_blank" rel="noopener">INTERVIEW PREP</a>
+        </div></div>
+      </div>
+      <div class="nav-divider"></div>
+      <a href="mailto:h3adsec@gmail.com">CONTACT</a>
+    </div>
+  <div class="nav-right">
+    <div class="theme-toggle" onclick="toggleTheme()" title="Toggle theme" role="button" aria-label="Toggle theme">
+      <div class="toggle-track"><div class="toggle-thumb"></div></div>
+    </div>
+  </div>
+</nav>
+
+<div class="nav-drawer" id="navDrawer">
+      <a href="https://h3ad-sec.github.io/H3AD/" onclick="closeDrawer()">H3AD</a>
+    <a href="https://h3ad-sec.github.io/H3AD-X/" onclick="closeDrawer()">H3AD-X</a>
+    <a href="https://h3ad-sec.github.io/IOC-VERDIKT/" target="_blank" rel="noopener" onclick="closeDrawer()" class="drawer-sub">↳ IOC-VERDIKT ↗</a>
+    <a href="https://h3ad-sec.github.io/PARSE-X/" target="_blank" rel="noopener" onclick="closeDrawer()" class="drawer-sub">↳ PARSE-X ↗</a>
+    <a href="https://h3ad-sec.github.io/DNSCOPE/" target="_blank" rel="noopener" onclick="closeDrawer()" class="drawer-sub">↳ DNSCOPE ↗</a>
+    <a href="https://h3ad-sec.github.io/X-VERDIKT/" target="_blank" rel="noopener" onclick="closeDrawer()" class="drawer-sub">↳ X-VERDIKT ↗</a>
+    <a href="https://h3ad-sec.github.io/MAILSCOPE/" target="_blank" rel="noopener" onclick="closeDrawer()" class="drawer-sub">↳ MAILSCOPE ↗</a>
+    <a href="https://h3ad-sec.github.io/INFRA-SCOPE/" target="_blank" rel="noopener" onclick="closeDrawer()" class="drawer-sub">↳ INFRA-SCOPE ↗</a>
+    <a href="https://h3ad-sec.github.io/H3AD-AI/" onclick="closeDrawer()">H3AD-AI</a>
+    <a href="https://h3ad-sec.github.io/PROMPTVAULT/" target="_blank" rel="noopener" onclick="closeDrawer()" class="drawer-sub">↳ PROMPTVAULT ↗</a>
+    <a href="https://h3ad-sec.github.io/H3AD-DETECT/" onclick="closeDrawer()">H3AD-DETECT</a>
+    <a href="https://h3ad-sec.github.io/TRACERULES/" target="_blank" rel="noopener" onclick="closeDrawer()" class="drawer-sub">↳ TRACERULES ↗</a>
+    <a href="https://h3ad-sec.github.io/H3AD-HUNT/" onclick="closeDrawer()">H3AD-HUNT</a>
+    <a href="https://h3ad-sec.github.io/HYPOS/" target="_blank" rel="noopener" onclick="closeDrawer()" class="drawer-sub">↳ HYPOS ↗</a>
+    <a href="https://h3ad-sec.github.io/PIVEX/" target="_blank" rel="noopener" onclick="closeDrawer()" class="drawer-sub">↳ PIVEX ↗</a>
+    <a href="https://h3ad-sec.github.io/TRACEPULSE/" target="_blank" rel="noopener" onclick="closeDrawer()" class="drawer-sub">↳ TRACEPULSE ↗</a>
+    <a href="https://h3ad-sec.github.io/H3AD-OPS/" onclick="closeDrawer()">H3AD-OPS</a>
+    <a href="https://h3ad-sec.github.io/QUICKTRACE/" target="_blank" rel="noopener" onclick="closeDrawer()" class="drawer-sub">↳ QUICKTRACE ↗</a>
+    <a href="https://h3ad-sec.github.io/PHISHOPS/" target="_blank" rel="noopener" onclick="closeDrawer()" class="drawer-sub">↳ PHISHOPS ↗</a>
+    <a href="https://h3ad-sec.github.io/H3AD-DF/" onclick="closeDrawer()">H3AD-DF</a>
+    <a href="https://h3ad-sec.github.io/ARTIFEKTX/" target="_blank" rel="noopener" onclick="closeDrawer()" class="drawer-sub">↳ ARTIFEKTX ↗</a>
+    <a href="https://h3ad-sec.github.io/CHRONIFY/" target="_blank" rel="noopener" onclick="closeDrawer()" class="drawer-sub">↳ CHRONIFY ↗</a>
+    <a href="https://h3ad-sec.github.io/WIN-EVT/" target="_blank" rel="noopener" onclick="closeDrawer()" class="drawer-sub nav-current">↳ WIN-EVT ↗</a>
+    <a href="https://h3ad-sec.github.io/H3AD-IR/" onclick="closeDrawer()">H3AD-IR</a>
+    <a href="https://h3ad-sec.github.io/H3AD-LEARN/" onclick="closeDrawer()">H3AD-LEARN</a>
+    <a href="https://h3ad-sec.github.io/H3AD-LEARN/fundamentals/" target="_blank" rel="noopener" onclick="closeDrawer()" class="drawer-sub">↳ FUNDAMENTALS ↗</a>
+    <a href="https://h3ad-sec.github.io/H3AD-LEARN/networking/" target="_blank" rel="noopener" onclick="closeDrawer()" class="drawer-sub">↳ NETWORKING ↗</a>
+    <a href="https://h3ad-sec.github.io/H3AD-LEARN/windows/" target="_blank" rel="noopener" onclick="closeDrawer()" class="drawer-sub">↳ WINDOWS ↗</a>
+    <a href="https://h3ad-sec.github.io/H3AD-LEARN/threat-hunting/" target="_blank" rel="noopener" onclick="closeDrawer()" class="drawer-sub">↳ THREAT HUNTING ↗</a>
+    <a href="https://h3ad-sec.github.io/H3AD-LEARN/lolbas/" target="_blank" rel="noopener" onclick="closeDrawer()" class="drawer-sub">↳ LOLBAS ↗</a>
+    <a href="https://h3ad-sec.github.io/H3AD-LEARN/threat-intel/" target="_blank" rel="noopener" onclick="closeDrawer()" class="drawer-sub">↳ THREAT INTEL ↗</a>
+    <a href="https://h3ad-sec.github.io/H3AD-LEARN/cloud-security/" target="_blank" rel="noopener" onclick="closeDrawer()" class="drawer-sub">↳ CLOUD SECURITY ↗</a>
+    <a href="https://h3ad-sec.github.io/H3AD-LEARN/interview-prep/" target="_blank" rel="noopener" onclick="closeDrawer()" class="drawer-sub">↳ INTERVIEW PREP ↗</a>
+    <a href="mailto:h3adsec@gmail.com" onclick="closeDrawer()">CONTACT</a>
+  </div>
+
+<div class="we-app">
+  <div class="we-toolbar">
+    <div class="we-search">
+      <span class="glyph"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></span>
+      <input id="searchInput" type="search" placeholder="search ID, name, fields, anomalies... ( / )" autocomplete="off" spellcheck="false" oninput="onSearch()" />
+      <span class="hint"><kbd>/</kbd></span>
+    </div>
+    <div class="we-stat-strip" id="statStrip"></div>
+  </div>
+
+  <div class="we-filterbar">
+    <div class="we-filter-group">
+      <span class="we-filter-group-label">Source</span>
+      <div id="sourceChips"></div>
+    </div>
+    <div class="we-filter-group">
+      <span class="we-filter-group-label">Category</span>
+      <select id="categorySelect" class="we-select" onchange="setCategory(this.value)" aria-label="Filter by category"></select>
+    </div>
+    <div class="we-filter-group">
+      <span class="we-filter-group-label">Priority</span>
+      <div id="priorityChips"></div>
+    </div>
+    <div class="we-filter-group">
+      <span class="we-filter-group-label">Sort</span>
+      <select id="sortSelect" class="we-sort-select" onchange="setSortFromSelect(this.value)" aria-label="Sort by">
+        <option value="id:1">ID (asc)</option>
+        <option value="id:-1">ID (desc)</option>
+        <option value="name:1">Name (A&ndash;Z)</option>
+        <option value="name:-1">Name (Z&ndash;A)</option>
+        <option value="category:1">Category</option>
+        <option value="priority:1">Priority (Critical first)</option>
+        <option value="log_source:1">Source</option>
+      </select>
+    </div>
+    <div class="we-result-count" id="resultCount"></div>
+  </div>
+
+  <div class="we-card-scroll" id="cardScroll">
+    <div class="we-card-grid" id="cardGrid"></div>
+  </div>
+</div>
+
+<div class="we-inspector-backdrop" id="inspectorBackdrop" onclick="closeInspector()"></div>
+<aside class="we-inspector" id="inspector" role="dialog" aria-label="Event ID detail">
+  <div class="we-inspector-head">
+    <div class="we-inspector-nav">
+      <button class="we-inspector-navbtn" id="prevBtn" onclick="stepInspector(-1)" title="Previous (↑)" aria-label="Previous event">↑</button>
+      <button class="we-inspector-navbtn" id="nextBtn" onclick="stepInspector(1)" title="Next (↓)" aria-label="Next event">↓</button>
+    </div>
+    <button class="we-inspector-close" onclick="closeInspector()" title="Close (Esc)" aria-label="Close">✕</button>
+  </div>
+  <div class="we-inspector-scroll" id="inspectorScroll">
+    <div class="we-inspector-inner" id="detailInner"></div>
+  </div>
+</aside>
+
+<footer class="tracer-footer">
+  <span class="footer-left">H3AD-SEC © 2026 &nbsp;|&nbsp; WIN-EVT</span>
+  <span class="footer-right">WINDOWS EVENT ID REFERENCE</span>
+  <div class="footer-credit-row">
+    <a class="footer-credit-pill" href="https://www.linkedin.com/in/hrushikesh-badgujar/" target="_blank" rel="noopener" title="Connect on LinkedIn">
+      <span class="credit-tool"><span class="xv-pill-accent">WIN</span><span class="xv-pill-text">-EVT</span></span>
+      <span class="credit-by">created by</span>
+      <span class="credit-name">H3AD</span>
+    </a>
+  </div>
+</footer>
+
+<script>
+function toggleDrawer(){document.getElementById('navDrawer').classList.toggle('open');}
+function closeDrawer(){document.getElementById('navDrawer').classList.remove('open');}
+
+(function(){
+  var saved=localStorage.getItem('h3ad-theme');
+  if(saved==='light')document.body.classList.add('light');
+  var logo=document.getElementById('navLogo');
+  if(logo)logo.src=document.body.classList.contains('light')
+    ?'https://raw.githubusercontent.com/h3ad-sec/h3ad-sec.github.io/main/logo-light.png'
+    :'https://raw.githubusercontent.com/h3ad-sec/h3ad-sec.github.io/main/logo-dark.png';
+})();
+function toggleTheme(){
+  var isLight=document.body.classList.toggle('light');
+  localStorage.setItem('h3ad-theme',isLight?'light':'dark');
+  var logo=document.getElementById('navLogo');
+  if(logo)logo.src=isLight
+    ?'https://raw.githubusercontent.com/h3ad-sec/h3ad-sec.github.io/main/logo-light.png'
+    :'https://raw.githubusercontent.com/h3ad-sec/h3ad-sec.github.io/main/logo-dark.png';
+}
+
+/* ── Data + state ── */
+var CATEGORY_COLORS={
+  'Authentication':'#00d4ff','Process Execution':'#58a6ff','Services':'#f59e0b','Registry':'#a78bfa',
+  'Network':'#ea580c','Policy & Audit':'#ca8a04','Object Access':'#14b8a6','Account Management':'#be185d',
+  'File System':'#eab308','Network Activity':'#fb923c','Service Management':'#fbbf24',
+  'Driver/Module Loading':'#818cf8','Process Injection':'#c026d3','Disk Access':'#0ea5e9',
+  'Credential Access':'#7c3aed','Inter-Process Communication':'#0891b2','WMI Persistence':'#4f46e5',
+  'DNS Activity':'#0d9488','Clipboard Activity':'#94a3b8','File Blocking':'#facc15'
+};
+function categoryColor(c){ return CATEGORY_COLORS[c] || '#8b949e'; }
+
+var PRIORITY_ORDER=['Critical','High','Medium','Low'];
+var PRIORITY_COLORS={'Critical':'#f59e0b','High':'#fb923c','Medium':'#58a6ff','Low':'#8b949e'};
+function priorityColor(p){ return PRIORITY_COLORS[p] || '#8b949e'; }
+function priorityRank(p){ var i=PRIORITY_ORDER.indexOf(p); return i===-1?99:i; }
+function contrastText(hex){
+  var m=/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if(!m) return '#04101c';
+  var r=parseInt(m[1],16)/255, g=parseInt(m[2],16)/255, b=parseInt(m[3],16)/255;
+  var lin=[r,g,b].map(function(c){ return c<=0.03928 ? c/12.92 : Math.pow((c+0.055)/1.055,2.4); });
+  var L=0.2126*lin[0]+0.7152*lin[1]+0.0722*lin[2];
+  return L>0.45 ? '#04101c' : '#ffffff';
+}
+
+var allEvents=[];
+var activeSource='all';
+var activeCategory='all';
+var activePriority='all';
+var searchTerm='';
+var selectedId=null;
+var sortField='id';
+var sortDir=1;
+
+function escapeHtml(s){
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function uniqueSorted(arr){
+  var seen={}; var out=[];
+  arr.forEach(function(v){ if(!seen[v]){ seen[v]=true; out.push(v); } });
+  return out.sort();
+}
+function idSortVal(id){
+  var n=parseInt(id,10);
+  return isNaN(n)?[1,id]:[0,n];
+}
+function getFiltered(){
+  var out=allEvents.filter(function(e){
+    if(activeSource!=='all'&&e.log_source!==activeSource)return false;
+    if(activeCategory!=='all'&&e.category!==activeCategory)return false;
+    if(activePriority!=='all'&&e.priority!==activePriority)return false;
+    if(!searchTerm)return true;
+    var hay=[e.id,e.name,e.description,(e.key_fields||[]).map(function(k){return k.field+' '+k.meaning;}).join(' '),
+      (e.anomalies||[]).join(' '),(e.related_attacks||[]).join(' ')].join(' ').toLowerCase();
+    return hay.indexOf(searchTerm)!==-1;
+  });
+  out.sort(function(a,b){
+    var r;
+    if(sortField==='id'){
+      var av=idSortVal(a.id), bv=idSortVal(b.id);
+      r=av[0]-bv[0]; if(r===0) r=(typeof av[1]==='number')?av[1]-bv[1]:String(av[1]).localeCompare(String(bv[1]));
+    } else if(sortField==='priority'){
+      r=priorityRank(a.priority)-priorityRank(b.priority);
+    } else {
+      r=String(a[sortField]||'').localeCompare(String(b[sortField]||''));
+    }
+    return r*sortDir;
+  });
+  return out;
+}
+
+function setSort(field, dir){
+  sortField=field; sortDir=dir||1;
+  renderCards();
+}
+function setSortFromSelect(v){
+  var parts=v.split(':');
+  setSort(parts[0], parseInt(parts[1],10));
+}
+
+function renderChips(container, field, activeVal, setter, withDot, fixedOrder, colorFn){
+  if(!container) return;
+  var values=fixedOrder||uniqueSorted(allEvents.map(function(e){return e[field];}));
+  var getColor=colorFn||categoryColor;
+  var options=[{id:'all',label:'All'}].concat(values.map(function(v){return {id:v,label:v};}));
+  container.innerHTML=options.map(function(o){
+    var isActive=activeVal===o.id;
+    var color=(withDot&&o.id!=='all')?getColor(o.id):null;
+    var dot=color?'<span class="dot" style="background:'+color+'"></span>':'';
+    var style=(isActive&&color)?' style="--chip-color:'+color+'"':'';
+    return '<button class="we-chip'+(isActive?' active':'')+'"'+style+' onclick="'+setter+'(\''+escapeHtml(o.id)+'\')">'+dot+escapeHtml(o.label)+'</button>';
+  }).join('');
+}
+function renderCategorySelect(){
+  var sel=document.getElementById('categorySelect');
+  if(!sel) return;
+  var values=uniqueSorted(allEvents.map(function(e){return e.category;}));
+  var options=[{id:'all',label:'All Categories'}].concat(values.map(function(v){return {id:v,label:v};}));
+  sel.innerHTML=options.map(function(o){
+    return '<option value="'+escapeHtml(o.id)+'"'+(activeCategory===o.id?' selected':'')+'>'+escapeHtml(o.label)+'</option>';
+  }).join('');
+}
+function renderFilters(){
+  renderChips(document.getElementById('sourceChips'),'log_source',activeSource,'setSource',false);
+  renderChips(document.getElementById('priorityChips'),'priority',activePriority,'setPriority',true,PRIORITY_ORDER,priorityColor);
+  renderCategorySelect();
+}
+function setSource(v){ activeSource=v; renderFilters(); applyFilterAndRender(); }
+function setCategory(v){ activeCategory=v; renderFilters(); applyFilterAndRender(); }
+function setPriority(v){
+  activePriority=(activePriority===v && v!=='all')?'all':v;
+  renderFilters(); applyFilterAndRender();
+}
+function onSearch(){ searchTerm=(document.getElementById('searchInput').value||'').toLowerCase().trim(); applyFilterAndRender(); }
+
+function renderCards(){
+  var grid=document.getElementById('cardGrid');
+  var countEl=document.getElementById('resultCount');
+  var filtered=getFiltered();
+  if(countEl) countEl.innerHTML='<span style="color:var(--accent)">'+filtered.length+'</span> of '+allEvents.length+' events';
+  if(!filtered.length){
+    grid.innerHTML='<div class="we-state-panel" style="grid-column:1/-1"><div class="we-state-title">NO EVENT IDS MATCH</div><div class="we-state-desc">Adjust filters or search term.</div></div>';
+    return;
+  }
+  grid.innerHTML=filtered.map(function(e){
+    var catColor=categoryColor(e.category);
+    var prioColor=priorityColor(e.priority);
+    var catText=contrastText(catColor);
+    var prioText=contrastText(prioColor);
+    var active=selectedId===e.id;
+    return '<button class="we-card'+(active?' active':'')+'" style="--row-color:'+catColor+'" onclick="selectEvent(\''+e.id+'\')">'
+      +'<div class="we-card-top"><span class="we-card-id">'+escapeHtml(e.id)+'</span>'
+        +'<span class="we-prio-pill" style="background:'+prioColor+';color:'+prioText+'">'+escapeHtml((e.priority||'').toUpperCase())+'</span></div>'
+      +'<div class="we-card-name">'+escapeHtml(e.name)+'</div>'
+      +'<div class="we-card-foot"><span class="we-cat-pill" style="background:'+catColor+';color:'+catText+'">'+escapeHtml(e.category)+'</span>'
+        +'<span class="we-src-pill">'+escapeHtml(e.log_source)+'</span></div>'
+    +'</button>';
+  }).join('');
+}
+
+function attackUrl(id){
+  var m=id.match(/^T(\d{4})(?:\.(\d{3}))?$/);
+  return 'https://attack.mitre.org/techniques/'+ (m? 'T'+m[1]+(m[2]?'/'+m[2]:'') : id) +'/';
+}
+function attackChip(t){
+  return '<a class="we-attack-chip" href="'+attackUrl(t.id)+'" target="_blank" rel="noopener">'+escapeHtml(t.id)+' &mdash; '+escapeHtml(t.name)+'</a>';
+}
+function eventName(id){
+  var e=allEvents.filter(function(x){return x.id===id;})[0];
+  return e?e.name:null;
+}
+
+function renderDetail(){
+  var e=allEvents.filter(function(x){return x.id===selectedId;})[0];
+  if(!e) return;
+
+  var color=categoryColor(e.category);
+  var kf=(e.key_fields||[]).map(function(k){
+    return '<div class="we-kf-item" style="border-left-color:'+color+'"><div class="we-kf-name" style="--cat-color:'+color+'">'+escapeHtml(k.field)+'</div><div class="we-kf-meaning">'+escapeHtml(k.meaning)+'</div></div>';
+  }).join('');
+  var anomalies=(e.anomalies||[]).map(function(a){return '<li>'+escapeHtml(a)+'</li>';}).join('');
+  var steps=(e.investigation_steps||[]).map(function(s){return '<li>'+escapeHtml(s)+'</li>';}).join('');
+  var fps=(e.false_positives||[]).map(function(f){return '<li>'+escapeHtml(f)+'</li>';}).join('');
+  var attackChips=(e.attack_techniques||[]).map(attackChip).join('');
+  var relatedAttacks=(e.related_attacks||[]).map(function(t){return '<span class="we-tag">'+escapeHtml(t)+'</span>';}).join('');
+  var relatedIds=(e.related_ids||[]).map(function(rid){
+    var rname=eventName(rid);
+    return '<button class="we-related-chip" onclick="selectEvent(\''+rid+'\')">'+escapeHtml(rid)+(rname?' &mdash; '+escapeHtml(rname):'')+'</button>';
+  }).join('');
+
+  var html='<div class="we-d-info" style="--cat-color:'+color+'">'
+    +'<div class="we-d-eyebrow" style="color:'+color+'">'+escapeHtml(e.category)+'</div>'
+    +'<h1 class="we-d-title">'+escapeHtml(e.id)+' &mdash; '+escapeHtml(e.name)+'</h1>'
+    +'<div class="we-d-meta"><span class="we-pill src">'+escapeHtml(e.log_source)+' LOG</span>'
+      +(e.priority?'<span class="we-pill" style="background:'+priorityColor(e.priority)+';color:'+contrastText(priorityColor(e.priority))+';border-color:'+priorityColor(e.priority)+'">'+escapeHtml(e.priority.toUpperCase())+' PRIORITY</span>':'')
+    +'</div>'
+    +'<p class="we-d-desc">'+escapeHtml(e.description)+'</p>'
+  +'</div>';
+
+  var sections=[];
+  if(kf) sections.push({id:'sec-fields',label:'Key Fields',body:'<div class="we-kf-list">'+kf+'</div>'});
+  sections.push({id:'sec-baseline',label:'Baseline',body:'<div class="we-info-box">'+escapeHtml(e.normal_baseline)+'</div>'});
+  if(e.sample_log) sections.push({id:'sec-sample',label:'Sample Log',body:
+    '<div class="we-code"><div class="we-code-bar"><span class="lbl">EVENT '+escapeHtml(e.id)+'</span><button onclick="copyBlock(this,'+JSON.stringify(e.sample_log)+')">COPY</button></div>'
+    +'<pre>'+escapeHtml(e.sample_log)+'</pre></div>'});
+  if(anomalies) sections.push({id:'sec-anomalies',label:'Anomalies',body:'<ul class="we-list-box">'+anomalies+'</ul>'});
+  if(e.detection_query) sections.push({id:'sec-detection',label:'Detection Query',body:
+    '<div class="we-code"><div class="we-code-bar"><span class="lbl">KQL</span><button onclick="copyBlock(this,'+JSON.stringify(e.detection_query)+')">COPY</button></div>'
+    +'<pre>'+escapeHtml(e.detection_query)+'</pre></div>',
+    heading:'Detection Query (KQL &middot; Microsoft Sentinel)'});
+  if(e.attack_example) sections.push({id:'sec-attackex',label:'Attack Example',body:
+    '<div class="we-scenario">'+escapeHtml(e.attack_example.scenario)+'</div>'
+    +'<div class="we-code danger"><div class="we-code-bar"><span class="lbl">EVENT '+escapeHtml(e.id)+' &middot; UNDER ATTACK</span><button onclick="copyBlock(this,'+JSON.stringify(e.attack_example.log)+')">COPY</button></div>'
+    +'<pre>'+escapeHtml(e.attack_example.log)+'</pre></div>'});
+  if(steps) sections.push({id:'sec-steps',label:'Investigation',body:'<ol class="we-steps">'+steps+'</ol>'});
+  if(fps) sections.push({id:'sec-fp',label:'False Positives',body:'<ul class="we-fp-list">'+fps+'</ul>',heading:'Common False Positives'});
+  if(attackChips) sections.push({id:'sec-attck',label:'ATT&amp;CK',body:'<div class="we-tags">'+attackChips+'</div>',heading:'ATT&amp;CK Techniques'});
+  if(relatedAttacks) sections.push({id:'sec-evidence',label:'Evidence For',body:'<div class="we-tags">'+relatedAttacks+'</div>',heading:'Where This Is Useful As Evidence'});
+  if((e.artifektx_links||[]).length){
+    var artxChips=e.artifektx_links.map(function(l){
+      return '<a class="we-attack-chip" href="https://h3ad-sec.github.io/ARTIFEKTX/#'+encodeURIComponent(l.id)+'" target="_blank" rel="noopener">'+escapeHtml(l.name)+' &#x2197;</a>';
+    }).join('');
+    sections.push({id:'sec-artifektx',label:'ARTIFEKTX',body:'<div class="we-tags">'+artxChips+'</div>',heading:'Related ARTIFEKTX Artifacts'});
+  }
+  if(relatedIds) sections.push({id:'sec-related',label:'Related IDs',body:'<div class="we-tags">'+relatedIds+'</div>',heading:'Related Event IDs'});
+
+  var jumpNav='<div class="we-jumpnav">'+sections.map(function(s){
+    return '<button class="we-jumpchip" onclick="jumpToSection(\''+s.id+'\')">'+s.label+'</button>';
+  }).join('')+'</div>';
+
+  html+=jumpNav+sections.map(function(s){
+    return '<div class="we-d-sec" id="'+s.id+'"><div class="we-d-sec-h">'+(s.heading||s.label)+'</div>'+s.body+'</div>';
+  }).join('');
+
+  document.getElementById('detailInner').innerHTML=html;
+  document.getElementById('inspectorScroll').scrollTop=0;
+  updateInspectorNavButtons();
+}
+
+function jumpToSection(id){
+  var el=document.getElementById(id);
+  var scroll=document.getElementById('inspectorScroll');
+  if(el && scroll) scroll.scrollTo({top: el.offsetTop-14, behavior:'smooth'});
+}
+
+function copyBlock(btn, text){
+  navigator.clipboard.writeText(text).then(function(){
+    var orig=btn.textContent; btn.textContent='COPIED ✓'; setTimeout(function(){btn.textContent=orig;},1400);
+  });
+}
+
+/* ── Inspector open/close/navigate ── */
+function openInspector(id){
+  selectedId=id;
+  history.replaceState(null,'','#'+id);
+  document.getElementById('inspector').classList.add('open');
+  document.getElementById('inspectorBackdrop').classList.add('open');
+  renderCards();
+  renderDetail();
+}
+function closeInspector(){
+  document.getElementById('inspector').classList.remove('open');
+  document.getElementById('inspectorBackdrop').classList.remove('open');
+}
+function selectEvent(id){ openInspector(id); }
+function stepInspector(dir){
+  var filtered=getFiltered();
+  if(!filtered.length) return;
+  var idx=filtered.findIndex(function(x){return x.id===selectedId;});
+  if(idx===-1){ openInspector(filtered[0].id); return; }
+  var next=idx+dir;
+  if(next<0||next>=filtered.length) return;
+  openInspector(filtered[next].id);
+}
+function updateInspectorNavButtons(){
+  var filtered=getFiltered();
+  var idx=filtered.findIndex(function(x){return x.id===selectedId;});
+  var prevBtn=document.getElementById('prevBtn'), nextBtn=document.getElementById('nextBtn');
+  if(prevBtn) prevBtn.disabled=(idx<=0);
+  if(nextBtn) nextBtn.disabled=(idx===-1||idx>=filtered.length-1);
+}
+
+function applyFilterAndRender(){
+  renderCards();
+  if(selectedId){
+    var stillVisible=getFiltered().some(function(e){return e.id===selectedId;});
+    if(!stillVisible) closeInspector();
+    else updateInspectorNavButtons();
+  }
+}
+
+function updateStatStrip(){
+  var cats=uniqueSorted(allEvents.map(function(e){return e.category;})).length;
+  document.getElementById('statStrip').innerHTML=
+    '<b>'+allEvents.length+'</b> event IDs<span class="we-stat-sep">&middot;</span><b>'+cats+'</b> categories'
+    +'<span class="we-stat-sep">&middot;</span><span class="we-kbd-hint"><kbd>/</kbd>search</span>'
+    +'<span class="we-kbd-hint"><kbd>&uarr;</kbd><kbd>&darr;</kbd>navigate</span>'
+    +'<span class="we-kbd-hint"><kbd>esc</kbd>close</span>';
+}
+
+function showError(){
+  document.getElementById('cardGrid').innerHTML=
+    '<div class="we-state-panel" style="grid-column:1/-1"><div class="we-state-title">FAILED TO LOAD</div>'
+    +'<div class="we-state-desc">Could not load event ID data.</div>'
+    +'<button class="we-retry" onclick="bootstrap()">RETRY</button></div>';
+}
+
+document.addEventListener('keydown',function(e){
+  var tag=(document.activeElement||{}).tagName;
+  var typing=(tag==='INPUT'||tag==='TEXTAREA');
+  var inspectorOpen=document.getElementById('inspector').classList.contains('open');
+  if(e.key==='/' && !typing){
+    e.preventDefault();
+    var input=document.getElementById('searchInput');
+    if(input) input.focus();
+  } else if(e.key==='Escape'){
+    var input2=document.getElementById('searchInput');
+    if(input2 && document.activeElement===input2){ input2.blur(); return; }
+    if(inspectorOpen){ closeInspector(); }
+  } else if((e.key==='ArrowDown'||e.key==='ArrowUp') && !typing && inspectorOpen){
+    e.preventDefault();
+    stepInspector(e.key==='ArrowDown'?1:-1);
+  }
+});
+
+function bootstrap(){
+  document.getElementById('cardGrid').innerHTML='<div class="we-state-panel" style="grid-column:1/-1"><div class="we-loading">LOADING...</div></div>';
+  fetch('data/event-ids.json')
+    .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+    .then(function(data){
+      allEvents=(data.events||[]).slice();
+      updateStatStrip();
+      renderFilters();
+      renderCards();
+      var hash=(location.hash||'').replace('#','');
+      if(hash && allEvents.some(function(e){return e.id===hash;})){
+        openInspector(hash);
+      }
+    })
+    .catch(function(err){ showError(); throw err; });
+}
+bootstrap();
+</script>
+</body>
+</html>
