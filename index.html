@@ -146,10 +146,19 @@ body.light .toggle-thumb{transform:translateX(22px);}
   .we-search{order:1;flex:1 1 100%;max-width:none;}
   .we-search input{height:42px;font-size:16px;padding:0 40px 0 38px;}
   .we-search .hint{display:none;}
+  .we-view-toggle{order:2;}
 }
+
+.we-view-toggle{display:flex;flex-shrink:0;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:2px;gap:2px;}
+.we-view-btn{font-family:var(--font-cond);font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+  padding:7px 12px;border:none;border-radius:5px;background:transparent;color:var(--muted);cursor:pointer;white-space:nowrap;transition:.14s;}
+.we-view-btn:hover{color:var(--text);}
+.we-view-btn.active{background:var(--accent);color:#04101c;}
+@media(max-width:900px){.we-view-btn{font-size:10px;padding:6px 9px;}}
 
 
 /* ── Filter bar ── */
+.we-filterbar[hidden]{display:none!important;}
 .we-filterbar{display:flex;align-items:center;gap:18px;padding:10px 20px;border-bottom:1px solid var(--border-soft);
   background:var(--panel-alt);flex-wrap:wrap;flex-shrink:0;row-gap:10px;}
 .we-filter-group{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
@@ -201,6 +210,38 @@ body.light .toggle-thumb{transform:translateX(22px);}
   background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:3px 8px;}
 @media(max-width:480px){.we-card-grid{grid-template-columns:1fr;}}
 @media(max-width:480px){.we-card-grid{grid-template-columns:1fr;}}
+
+/* ── Playbooks (investigation-goal view) ── */
+.we-pb-scroll{flex:1;overflow:auto;min-height:0;padding:16px 20px 32px;}
+.we-pb-intro{font-size:13px;color:var(--muted);max-width:70ch;margin-bottom:16px;line-height:1.55;}
+.we-pb-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;}
+@media(max-width:860px){.we-pb-grid{grid-template-columns:1fr;}}
+.we-pb-card{background:linear-gradient(155deg, color-mix(in srgb, var(--pb-color,var(--accent)) 16%, var(--panel)) 0%, var(--panel) 60%);
+  border:1px solid var(--border-soft);border-top:4px solid var(--pb-color,var(--accent));border-radius:9px;
+  transition:border-color .18s,box-shadow .18s;}
+.we-pb-card.open{border-color:var(--border-strong);box-shadow:0 8px 22px -8px color-mix(in srgb, var(--pb-color,var(--accent)) 40%, transparent);}
+.we-pb-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:16px 18px;cursor:pointer;
+  background:transparent;border:none;width:100%;text-align:left;font-family:var(--ui);}
+.we-pb-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.we-pb-tagline{font-size:12.5px;color:var(--muted);line-height:1.5;}
+.we-pb-meta{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.we-pb-count{font-family:var(--mono);font-size:10.5px;color:var(--dim);white-space:nowrap;background:var(--surface);
+  border:1px solid var(--border);border-radius:12px;padding:3px 9px;}
+.we-pb-caret{color:var(--dim);font-size:11px;transition:transform .18s;flex-shrink:0;margin-top:2px;}
+.we-pb-card.open .we-pb-caret{transform:rotate(180deg);}
+.we-pb-steps{display:none;flex-direction:column;padding:0 18px 16px;gap:0;}
+.we-pb-card.open .we-pb-steps{display:flex;}
+.we-pb-step{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-top:1px solid var(--border-soft);cursor:pointer;
+  background:transparent;border-left:none;border-right:none;border-bottom:none;width:100%;text-align:left;font-family:var(--ui);}
+.we-pb-step:hover .we-pb-step-name{color:var(--accent);}
+.we-pb-step-num{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--dim);flex-shrink:0;
+  width:20px;height:20px;border-radius:50%;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;margin-top:1px;}
+.we-pb-step-body{min-width:0;flex:1;}
+.we-pb-step-name{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--text);transition:color .12s;}
+.we-pb-step-why{font-size:12px;color:var(--muted);line-height:1.5;margin-top:3px;}
+.we-pb-step-go{flex-shrink:0;font-family:var(--font-cond);font-size:9.5px;font-weight:700;letter-spacing:.05em;
+  color:var(--dim);white-space:nowrap;margin-top:3px;}
+.we-pb-step:hover .we-pb-step-go{color:var(--accent);}
 
 /* ── Inspector (slide-in drawer) ── */
 .we-inspector-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;opacity:0;pointer-events:none;transition:opacity .2s;}
@@ -481,6 +522,10 @@ body.light .we-inspector-backdrop{background:rgba(15,23,42,.25);}
       <input id="searchInput" type="search" placeholder="search ID, name, fields, anomalies... ( / )" autocomplete="off" spellcheck="false" oninput="onSearch()" />
       <span class="hint"><kbd>/</kbd></span>
     </div>
+    <div class="we-view-toggle" role="tablist" aria-label="View">
+      <button class="we-view-btn active" id="viewBtnEvents" role="tab" aria-selected="true" onclick="setView('events')">EVENT IDS</button>
+      <button class="we-view-btn" id="viewBtnPlaybooks" role="tab" aria-selected="false" onclick="setView('playbooks')">BY INVESTIGATION GOAL</button>
+    </div>
     <div class="we-stat-strip" id="statStrip"></div>
   </div>
 
@@ -514,6 +559,11 @@ body.light .we-inspector-backdrop{background:rgba(15,23,42,.25);}
 
   <div class="we-card-scroll" id="cardScroll">
     <div class="we-card-grid" id="cardGrid"></div>
+  </div>
+
+  <div class="we-pb-scroll" id="pbScroll" hidden>
+    <div class="we-pb-intro">Pick an investigation goal to get an ordered sequence of event IDs to check, with the reasoning behind each step.</div>
+    <div class="we-pb-grid" id="pbGrid"></div>
   </div>
 </div>
 
@@ -596,6 +646,72 @@ var searchTerm='';
 var selectedId=null;
 var sortField='id';
 var sortDir=1;
+var activeView='events';
+var openPlaybookId=null;
+
+var PLAYBOOKS=[
+  { id:'credential-access', title:'Credential Access & Dumping', tagline:'From LSASS memory reads to Kerberoasting.', color:'#7c3aed',
+    steps:[
+      {id:'4672', why:'Flags high-privilege logons — the access level attackers need before touching LSASS or requesting service tickets at scale.'},
+      {id:'Sysmon-10', why:'ProcessAccess events with a GrantedAccess like 0x1010 against lsass.exe are the direct fingerprint of Mimikatz-style credential dumping.'},
+      {id:'4648', why:'Explicit-credential logons show harvested creds being reused via runas, pass-the-hash, or a scheduled task.'},
+      {id:'4769', why:'A burst of service ticket requests using RC4 encryption (0x17) against many SPNs is the signature of Kerberoasting.'},
+      {id:'4771', why:'Repeated pre-authentication failures with no matching 4625s point to AS-REP roasting against accounts with pre-auth disabled.'}
+    ]},
+  { id:'lateral-movement', title:'Lateral Movement', tagline:'Tracing an attacker hop to hop across the network.', color:'#0ea5e9',
+    steps:[
+      {id:'4624', why:'A Logon Type 3 (network) on the target host marks the actual hop — check the source workstation/IP in the event.'},
+      {id:'4648', why:'Explicit-credential logons on the source host indicate pass-the-hash or pass-the-ticket rather than an interactive logon.'},
+      {id:'5140', why:'Admin share access (C$, ADMIN$) is the classic staging step before remote service execution.'},
+      {id:'Sysmon-3', why:'The outbound network connection from the source host to the target confirms the hop at the process level, not just the account level.'},
+      {id:'4688', why:'The process created on the target (psexec, wmic, PowerShell remoting) is the actual execution artifact of the lateral move.'},
+      {id:'4672', why:'Special privileges on the new logon confirm the attacker landed with an elevated context on the target.'}
+    ]},
+  { id:'persistence-hunting', title:'Persistence Hunting', tagline:'Where an attacker plants a way back in.', color:'#f59e0b',
+    steps:[
+      {id:'4697', why:'A new service is one of the most common persistence mechanisms — check the binary path for anything outside Program Files/Windows.'},
+      {id:'4698', why:'Scheduled tasks are the second most common mechanism — inspect the task action and trigger for staged re-execution.'},
+      {id:'Sysmon-13', why:'Run/RunOnce key writes under HKCU or HKLM are the classic registry-based autostart persistence.'},
+      {id:'Sysmon-19', why:'A new WMI event filter is step one of a 3-part WMI persistence chain (filter, then consumer, then binding).'},
+      {id:'Sysmon-21', why:'FilterToConsumerBinding completes the WMI persistence chain — correlate Sysmon 19/20/21 events by their shared Operation GUID.'},
+      {id:'Sysmon-6', why:'A newly loaded unsigned or unusually-located driver indicates kernel-level persistence, the hardest tier to detect and remove.'}
+    ]},
+  { id:'ransomware-response', title:'Ransomware / Mass Encryption Response', tagline:'Confirming scope and blast radius during an active encryption event.', color:'#ea580c',
+    steps:[
+      {id:'1102', why:'Audit log clearing is a common pre- or post-encryption anti-forensics step — its presence bounds your visibility window.'},
+      {id:'Sysmon-4', why:'Ransomware often tries to stop Sysmon before the main payload runs — a gap in Sysmon coverage is itself a signal.'},
+      {id:'Sysmon-13', why:'Registry changes disabling Volume Shadow Copy or Defender are frequently staged seconds before mass encryption starts.'},
+      {id:'Sysmon-11', why:'A sudden spike in FileCreate events across many directories in a short window is the direct fingerprint of mass encryption.'},
+      {id:'Sysmon-23', why:'Original files deleted right after their encrypted replacement is created confirms the encrypt-then-delete pattern most ransomware uses.'},
+      {id:'Sysmon-27', why:'If file-blocking is enabled, this confirms which executables were actually stopped versus which got through.'}
+    ]},
+  { id:'powershell-abuse', title:'Suspicious PowerShell Activity', tagline:'From an encoded one-liner to what it actually ran.', color:'#58a6ff',
+    steps:[
+      {id:'4688', why:'Start here: the process creation event shows the full command line, including -EncodedCommand or -WindowStyle Hidden flags.'},
+      {id:'4103', why:'Module logging shows which PowerShell modules and cmdlets were actually invoked during the session.'},
+      {id:'4104', why:'Script block logging is the payoff step — it deobfuscates and logs the real script content, even after -EncodedCommand decoding.'},
+      {id:'4105', why:'Command-started events tie a specific cmdlet invocation to a timestamp, useful for building an execution timeline.'},
+      {id:'Sysmon-1', why:'Cross-check the parent process (winword.exe, wscript.exe, an Office macro host) — that relationship is often the real red flag, not PowerShell itself.'}
+    ]},
+  { id:'account-takeover', title:'Account Takeover & Privilege Escalation', tagline:'From a brute-force spray to a new admin account.', color:'#be185d',
+    steps:[
+      {id:'4625', why:'A burst of failed logons, especially against many usernames from one source, is the spray/brute-force signature.'},
+      {id:'4771', why:'Kerberos pre-auth failures are the domain-joined equivalent of failed logons, often missed by teams only watching 4625.'},
+      {id:'4740', why:'An account lockout confirms the spray tripped policy thresholds — correlate the timestamp back to the failed-logon burst.'},
+      {id:'4624', why:'A successful logon shortly after the failed burst, especially outside business hours, marks the actual compromise.'},
+      {id:'4732', why:'Addition to a privileged local group (e.g. local Administrators) is the immediate next move after gaining a foothold.'},
+      {id:'4720', why:'A newly created account is a durable backup access path in case the original compromised credential gets reset.'}
+    ]},
+  { id:'data-exfiltration', title:'Data Exfiltration & Anti-Forensics', tagline:'What left the network, and what the attacker tried to erase after.', color:'#14b8a6',
+    steps:[
+      {id:'5145', why:'Share-access checks against sensitive file shares show reconnaissance and staging before a bulk copy.'},
+      {id:'4663', why:'Object access attempts on specific sensitive files confirm exactly what was touched, not just which share.'},
+      {id:'Sysmon-3', why:'An outbound connection to an unfamiliar external IP or cloud-storage endpoint around the same time is the exfil transport itself.'},
+      {id:'Sysmon-24', why:'Clipboard changes can indicate manual copy-paste exfiltration into webmail or a chat client, easy to miss if you only watch file/network events.'},
+      {id:'4660', why:'Deleting the source files after exfiltration is a common cleanup step — correlate the timestamp against the network connection above.'},
+      {id:'1102', why:'Audit log clearing at the end of the sequence is the attacker\'s attempt to erase the trail you just reconstructed.'}
+    ]}
+];
 
 function escapeHtml(s){
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -850,6 +966,48 @@ function showError(){
     +'<button class="we-retry" onclick="bootstrap()">RETRY</button></div>';
 }
 
+/* ── Playbooks (investigation-goal view) ── */
+function setView(v){
+  activeView=v;
+  var btnE=document.getElementById('viewBtnEvents'), btnP=document.getElementById('viewBtnPlaybooks');
+  btnE.classList.toggle('active', v==='events');
+  btnE.setAttribute('aria-selected', v==='events');
+  btnP.classList.toggle('active', v==='playbooks');
+  btnP.setAttribute('aria-selected', v==='playbooks');
+  document.querySelector('.we-filterbar').hidden = v!=='events';
+  document.getElementById('cardScroll').hidden = v!=='events';
+  document.getElementById('pbScroll').hidden = v!=='playbooks';
+}
+function eventById(id){ return allEvents.find(function(e){return e.id===id;}); }
+function togglePlaybook(id){
+  openPlaybookId = (openPlaybookId===id) ? null : id;
+  renderPlaybooks();
+}
+function renderPlaybooks(){
+  var grid=document.getElementById('pbGrid');
+  if(!grid) return;
+  grid.innerHTML=PLAYBOOKS.map(function(pb){
+    var open=openPlaybookId===pb.id;
+    var stepsHtml=pb.steps.map(function(s,i){
+      var ev=eventById(s.id);
+      var label=escapeHtml(s.id)+(ev?' &mdash; '+escapeHtml(ev.name):'');
+      return '<button class="we-pb-step" onclick="event.stopPropagation();openInspector(\''+s.id+'\')">'
+        +'<span class="we-pb-step-num">'+(i+1)+'</span>'
+        +'<span class="we-pb-step-body"><span class="we-pb-step-name">'+label+'</span>'
+        +'<div class="we-pb-step-why">'+escapeHtml(s.why)+'</div></span>'
+        +'<span class="we-pb-step-go">OPEN &rarr;</span>'
+        +'</button>';
+    }).join('');
+    return '<div class="we-pb-card'+(open?' open':'')+'" style="--pb-color:'+pb.color+'">'
+      +'<button class="we-pb-head" onclick="togglePlaybook(\''+pb.id+'\')" aria-expanded="'+open+'">'
+      +'<span><div class="we-pb-title">'+escapeHtml(pb.title)+'</div><div class="we-pb-tagline">'+escapeHtml(pb.tagline)+'</div></span>'
+      +'<span class="we-pb-meta"><span class="we-pb-count">'+pb.steps.length+' STEPS</span><span class="we-pb-caret">&#9662;</span></span>'
+      +'</button>'
+      +'<div class="we-pb-steps">'+stepsHtml+'</div>'
+      +'</div>';
+  }).join('');
+}
+
 document.addEventListener('keydown',function(e){
   var tag=(document.activeElement||{}).tagName;
   var typing=(tag==='INPUT'||tag==='TEXTAREA');
@@ -877,6 +1035,7 @@ function bootstrap(){
       updateStatStrip();
       renderFilters();
       renderCards();
+      renderPlaybooks();
       var hash=(location.hash||'').replace('#','');
       if(hash && allEvents.some(function(e){return e.id===hash;})){
         openInspector(hash);
