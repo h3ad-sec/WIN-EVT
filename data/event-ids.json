@@ -1,7 +1,7 @@
 {
   "generated": "2026-09-10",
-  "scope": "Security log (40 events) + PowerShell operational log (4 events) + Sysmon (29 events).",
-  "count": 73,
+  "scope": "Security log (40 events) + PowerShell operational log (4 events) + Sysmon (29 events) + RDP session logs (6 events) + Task Scheduler operational log (3 events) + Windows Defender operational log (4 events) + NTLM auditing (2 events).",
+  "count": 88,
   "note": "Sample logs and attack examples use the real Windows Security auditing field templates (verified against the field-by-field encyclopedia at ultimatewindowssecurity.com), with fictional CORP domain values and RFC 5737 documentation-range IPs (192.0.2.0/24, 198.51.100.0/24, 203.0.113.0/24) for anything external or attacker-controlled.",
   "events": [
     {
@@ -85,7 +85,10 @@
         "4634",
         "4648",
         "4672",
-        "4778"
+        "4778",
+        "1149",
+        "21",
+        "25"
       ]
     },
     {
@@ -167,7 +170,8 @@
         "4624",
         "4771",
         "4776",
-        "4740"
+        "4740",
+        "1149"
       ]
     },
     {
@@ -224,7 +228,8 @@
       "related_ids": [
         "4624",
         "4778",
-        "4779"
+        "4779",
+        "23"
       ]
     },
     {
@@ -610,7 +615,9 @@
       ],
       "related_ids": [
         "4624",
-        "4625"
+        "4625",
+        "8001",
+        "8004"
       ]
     },
     {
@@ -677,7 +684,9 @@
       "related_ids": [
         "4624",
         "4779",
-        "4634"
+        "4634",
+        "24",
+        "25"
       ]
     },
     {
@@ -739,7 +748,9 @@
       "related_ids": [
         "4778",
         "4634",
-        "4624"
+        "4624",
+        "24",
+        "25"
       ]
     },
     {
@@ -1055,7 +1066,9 @@
           "name": "Windows Services (Persistence)"
         }
       ],
-      "related_ids": []
+      "related_ids": [
+        "106"
+      ]
     },
     {
       "id": "4698",
@@ -1118,7 +1131,10 @@
       ],
       "related_ids": [
         "4702",
-        "4688"
+        "4688",
+        "106",
+        "140",
+        "141"
       ]
     },
     {
@@ -1180,7 +1196,8 @@
         }
       ],
       "related_ids": [
-        "4698"
+        "4698",
+        "140"
       ]
     },
     {
@@ -2769,7 +2786,9 @@
         "Sysmon-5",
         "Sysmon-7",
         "Sysmon-11",
-        "4688"
+        "4688",
+        "1116",
+        "1117"
       ]
     },
     {
@@ -4427,6 +4446,975 @@
         "Sysmon-27",
         "Sysmon-11",
         "Sysmon-1"
+      ]
+    },
+    {
+      "id": "1149",
+      "name": "User authentication succeeded",
+      "log_source": "RDP",
+      "category": "Remote Access",
+      "priority": "High",
+      "description": "Logged in the RemoteConnectionManager/Operational log the moment an inbound RDP client completes the pre-session Network Level Authentication (NLA) handshake, before any desktop session is created. It confirms only that supplied credentials passed NLA, not that a full interactive logon occurred -- the session-lifecycle story continues in events 21-25 and the Security log's 4624. Analysts use it as the earliest available marker of an inbound RDP connection attempt, which makes it valuable for spotting brute-force sweeps that never reach a full logon.",
+      "key_fields": [
+        {
+          "field": "User",
+          "meaning": "Account name the client supplied during NLA."
+        },
+        {
+          "field": "Domain",
+          "meaning": "Domain qualifying the supplied account."
+        },
+        {
+          "field": "Source Network Address",
+          "meaning": "IP address of the client that initiated the connection."
+        }
+      ],
+      "normal_baseline": "Expected wherever RDP is exposed to legitimate remote-access users (admin jump boxes, remote workers); volume tracks normal login patterns for those sources.",
+      "sample_log": "Remote Desktop Services: User authentication succeeded:\n\nUser: jsmith\nDomain: CORP\nSource Network Address: 10.20.4.51",
+      "anomalies": [
+        "1149 events from source IPs with no prior RDP history or outside approved remote-access ranges",
+        "High-frequency 1149 bursts against one or many accounts with no matching 21 session-logon shortly after, consistent with a brute-force/spray sweep or pre-auth scanning",
+        "1149 for an account with no legitimate remote-access business need"
+      ],
+      "attack_example": {
+        "scenario": "An internet-facing RDP listener receives a password-spray sweep: hundreds of 1149 events in a few minutes for different account names from a single external IP, almost none followed by a 21 session logon, until one credential finally lands.",
+        "log": "Remote Desktop Services: User authentication succeeded:\n\nUser: svc_backup\nDomain: CORP\nSource Network Address: 203.0.113.44"
+      },
+      "investigation_steps": [
+        "Correlate the 1149 timestamp and Source Network Address with a following 21 (LocalSessionManager) and a 4624 Logon Type 10 in the Security log; a 1149 with no matching 21 within about a minute suggests a failed or abandoned attempt.",
+        "Check Source Network Address against known admin jump hosts, VPN pools, and prior connection history for that account.",
+        "If volume is high, pull all 1149 events in the window grouped by Source Network Address to size the sweep and identify every targeted account."
+      ],
+      "false_positives": [
+        "Legitimate remote workers or admins reconnecting after a network drop, generating a fresh 1149 each time",
+        "RDP health-check or monitoring tools that open and close NLA handshakes on a schedule"
+      ],
+      "attack_techniques": [
+        {
+          "id": "T1021.001",
+          "name": "Remote Desktop Protocol"
+        }
+      ],
+      "detection_query": "Event\n| where Source == \"Microsoft-Windows-TerminalServices-RemoteConnectionManager\" and EventID == 1149\n| summarize Attempts=count(), Accounts=dcount(User) by SourceNetworkAddress=Address, bin(TimeGenerated, 15m)\n| where Attempts > 20",
+      "related_attacks": [
+        "Password spraying against internet-facing RDP",
+        "BlueKeep exploitation attempts",
+        "RDP brute-force preceding ransomware deployment"
+      ],
+      "artifektx_links": [
+        {
+          "id": "rdp-eventlogs",
+          "name": "RDP / TerminalServices Event Logs"
+        },
+        {
+          "id": "remote-desktop-protocol-rdp-usage",
+          "name": "Remote Desktop Protocol (RDP) Usage"
+        }
+      ],
+      "related_ids": [
+        "21",
+        "4624",
+        "4625"
+      ]
+    },
+    {
+      "id": "21",
+      "name": "Session logon succeeded",
+      "log_source": "RDP",
+      "category": "Remote Access",
+      "priority": "High",
+      "description": "Logged by LocalSessionManager/Operational the moment a Remote Desktop or local console session actually logs on, immediately after 1149's network authentication succeeds for RDP, or alongside local console logons. The Session ID assigned here threads every later 22/23/24/25 event for that session, and a genuine Source Network Address (rather than the literal value LOCAL) is what proves the logon was remote.",
+      "key_fields": [
+        {
+          "field": "User",
+          "meaning": "Account name (and domain) that logged on to the session."
+        },
+        {
+          "field": "Session ID",
+          "meaning": "Numeric ID assigned to this session, used to correlate 22/23/24/25 events for the same session."
+        },
+        {
+          "field": "Source Network Address",
+          "meaning": "Client IP address, or the literal string LOCAL for a console logon."
+        }
+      ],
+      "normal_baseline": "One 21 per interactive or RDP logon; volume matches expected shift starts and remote-access patterns for known accounts.",
+      "sample_log": "Remote Desktop Services: Session logon succeeded:\n\nUser: CORP\\jsmith\nSession ID: 2\nSource Network Address: 10.20.4.51",
+      "anomalies": [
+        "Source Network Address is a new or unfamiliar IP for that account",
+        "A 21 with no preceding 1149, or a 21 immediately following a burst of 1149 failures",
+        "Repeated 21 events for the same account across many different Session IDs in a short window"
+      ],
+      "attack_example": {
+        "scenario": "Credentials harvested via phishing are used to open an RDP session on a service account from an unfamiliar workstation outside its normal jump-box pattern; Session ID 4 is assigned and a genuine Source Network Address appears instead of LOCAL.",
+        "log": "Remote Desktop Services: Session logon succeeded:\n\nUser: CORP\\svc_backup\nSession ID: 4\nSource Network Address: 198.51.100.23"
+      },
+      "investigation_steps": [
+        "Pull the matching 1149 (if remote) and the Security log's 4624 Logon Type 10 for the same timeframe to build a complete authentication picture.",
+        "Track the Session ID forward through 22 (shell start) and later 23/24/25 to see how long the session ran and whether it disconnected or reconnected.",
+        "Compare Source Network Address against the account's normal logon history."
+      ],
+      "false_positives": [
+        "Normal remote-work and admin RDP usage from an already-approved source",
+        "Fast-user-switching or console unlock producing a LOCAL session logon"
+      ],
+      "attack_techniques": [
+        {
+          "id": "T1021.001",
+          "name": "Remote Desktop Protocol"
+        }
+      ],
+      "detection_query": "Event\n| where Source == \"Microsoft-Windows-TerminalServices-LocalSessionManager\" and EventID == 21\n| where Address != \"LOCAL\"\n| project TimeGenerated, Computer, User, SessionID, Address",
+      "related_attacks": [
+        "RDP-based lateral movement",
+        "Compromised credential use over RDP"
+      ],
+      "artifektx_links": [
+        {
+          "id": "rdp-eventlogs",
+          "name": "RDP / TerminalServices Event Logs"
+        },
+        {
+          "id": "remote-desktop-protocol-rdp-usage",
+          "name": "Remote Desktop Protocol (RDP) Usage"
+        }
+      ],
+      "related_ids": [
+        "1149",
+        "22",
+        "4624",
+        "4778"
+      ]
+    },
+    {
+      "id": "22",
+      "name": "Shell start notification received",
+      "log_source": "RDP",
+      "category": "Remote Access",
+      "priority": "Low",
+      "description": "Logged immediately after 21 once the session's shell (typically explorer.exe) actually initializes, confirming the desktop environment finished loading rather than the logon stalling or being torn down mid-setup. It carries the same User, Session ID, and Source Network Address as its paired 21 and is mainly useful for confirming a session reached a usable desktop.",
+      "key_fields": [
+        {
+          "field": "User",
+          "meaning": "Account the shell started for."
+        },
+        {
+          "field": "Session ID",
+          "meaning": "Matches the 21 event that began this session."
+        },
+        {
+          "field": "Source Network Address",
+          "meaning": "Client IP, or LOCAL for a console session."
+        }
+      ],
+      "normal_baseline": "Expected to follow almost every 21 within a few seconds; a 21 with no following 22 suggests the session never fully initialized.",
+      "sample_log": "Remote Desktop Services: Shell start notification received:\n\nUser: CORP\\jsmith\nSession ID: 2\nSource Network Address: 10.20.4.51",
+      "anomalies": [
+        "A 21 with no corresponding 22, suggesting the session was terminated or hung before the desktop loaded",
+        "Unusually long gaps between 21 and 22 for the same Session ID"
+      ],
+      "attack_example": {
+        "scenario": "Automated RDP session-abuse tooling logs on and immediately runs a script rather than waiting for the interactive shell, producing an unusual gap or a missing 22 event for that session while 4688/Sysmon process creations still appear.",
+        "log": "Remote Desktop Services: Shell start notification received:\n\nUser: CORP\\svc_backup\nSession ID: 4\nSource Network Address: 198.51.100.23"
+      },
+      "investigation_steps": [
+        "Confirm every 21 has a matching 22 for the same Session ID within a normal window; missing pairs deserve a closer look at what else that session did.",
+        "Cross-reference with 4688/Sysmon-1 process-creation events tied to the same session to see what ran instead of a normal shell."
+      ],
+      "false_positives": [
+        "Slow logons on heavily loaded terminal servers producing a longer-than-usual 21-to-22 gap",
+        "Scripted or unattended RDP sessions that intentionally skip a full interactive shell"
+      ],
+      "attack_techniques": [
+        {
+          "id": "T1021.001",
+          "name": "Remote Desktop Protocol"
+        }
+      ],
+      "detection_query": "Event\n| where Source == \"Microsoft-Windows-TerminalServices-LocalSessionManager\" and EventID in (21, 22)\n| summarize Events=make_set(EventID) by SessionID, bin(TimeGenerated, 1h)\n| where Events !contains 22",
+      "related_attacks": [
+        "RDP session abuse for scripted/automated attacker tooling"
+      ],
+      "artifektx_links": [
+        {
+          "id": "rdp-eventlogs",
+          "name": "RDP / TerminalServices Event Logs"
+        }
+      ],
+      "related_ids": [
+        "21",
+        "23"
+      ]
+    },
+    {
+      "id": "23",
+      "name": "Session logoff succeeded",
+      "log_source": "RDP",
+      "category": "Remote Access",
+      "priority": "Low",
+      "description": "Logged when an RDP or local session performs a clean, user-initiated logoff rather than a disconnect, ending that Session ID's lifecycle. It is the RDP-lifecycle counterpart to the Security log's 4634 and marks a definitive end to the session, unlike the leave-it-running state a 24 disconnect represents.",
+      "key_fields": [
+        {
+          "field": "User",
+          "meaning": "Account that logged off."
+        },
+        {
+          "field": "Session ID",
+          "meaning": "The session that ended."
+        },
+        {
+          "field": "Source Network Address",
+          "meaning": "Client IP recorded for that session, or LOCAL."
+        }
+      ],
+      "normal_baseline": "Expected whenever a user explicitly logs off rather than closing the RDP client or letting the network drop.",
+      "sample_log": "Remote Desktop Services: Session logoff succeeded:\n\nUser: CORP\\jsmith\nSession ID: 2\nSource Network Address: 10.20.4.51",
+      "anomalies": [
+        "A logoff with no preceding 21/22 for that Session ID in the retained log window, suggesting log gaps",
+        "Logoffs immediately followed by a fresh 21 logon for the same account, possibly indicating scripted repeated access"
+      ],
+      "attack_example": {
+        "scenario": "An attacker closes out an RDP session with a clean logoff rather than leaving it in the disconnected (24) state, avoiding a session that would show up as still active to an admin checking qwinsta output.",
+        "log": "Remote Desktop Services: Session logoff succeeded:\n\nUser: CORP\\jdoe.admin\nSession ID: 7\nSource Network Address: 198.51.100.23"
+      },
+      "investigation_steps": [
+        "Pair with the corresponding 4634 in the Security log and the original 21 to compute total session duration.",
+        "If the account routinely disconnects (24) rather than logs off, a clean 23 outside that pattern is worth a second look."
+      ],
+      "false_positives": [
+        "Normal end-of-shift logoffs and administrator-initiated session cleanup",
+        "System shutdown or reboot forcing a clean logoff of all active sessions"
+      ],
+      "attack_techniques": [
+        {
+          "id": "T1021.001",
+          "name": "Remote Desktop Protocol"
+        }
+      ],
+      "detection_query": "Event\n| where Source == \"Microsoft-Windows-TerminalServices-LocalSessionManager\" and EventID == 23\n| project TimeGenerated, Computer, User, SessionID",
+      "related_attacks": [
+        "RDP-based lateral movement session cleanup"
+      ],
+      "artifektx_links": [
+        {
+          "id": "rdp-eventlogs",
+          "name": "RDP / TerminalServices Event Logs"
+        }
+      ],
+      "related_ids": [
+        "21",
+        "4634"
+      ]
+    },
+    {
+      "id": "24",
+      "name": "Session has been disconnected",
+      "log_source": "RDP",
+      "category": "Remote Access",
+      "priority": "Medium",
+      "description": "Logged when an RDP session is disconnected without a full logoff -- the client window is closed, the network drops, or the user explicitly disconnects -- leaving the session running in the background so it can be resumed later via a 25 reconnect. Because the session survives, this is a favored state for keeping access alive without a fresh, loggable logon.",
+      "key_fields": [
+        {
+          "field": "User",
+          "meaning": "Account whose session disconnected."
+        },
+        {
+          "field": "Session ID",
+          "meaning": "Identifies the session that can later be reconnected."
+        },
+        {
+          "field": "Source Network Address",
+          "meaning": "Client IP that was connected before the disconnect, or LOCAL."
+        }
+      ],
+      "normal_baseline": "Common and expected whenever a user closes their RDP client, loses network connectivity, or hits an idle timeout without formally logging off.",
+      "sample_log": "Remote Desktop Services: Session has been disconnected:\n\nUser: CORP\\jsmith\nSession ID: 2\nSource Network Address: 10.20.4.51",
+      "anomalies": [
+        "Rapid disconnect/reconnect cycling on the same Session ID, used to keep a session alive while evading logoff-triggered controls",
+        "A disconnect with no later 25 reconnect or 23 logoff for an extended period, leaving an abandoned live session",
+        "Disconnects for privileged accounts outside their normal working pattern"
+      ],
+      "attack_example": {
+        "scenario": "An attacker holding a privileged RDP session deliberately disconnects instead of logging off so the session and any elevated context stay alive in the background, planning to reconnect later from a different host.",
+        "log": "Remote Desktop Services: Session has been disconnected:\n\nUser: CORP\\jdoe.admin\nSession ID: 7\nSource Network Address: 10.20.4.51"
+      },
+      "investigation_steps": [
+        "Treat this as a bookmark: watch for the following 25 reconnect (checking whether Source Network Address changes) or a 23/4634 logoff that properly closes it out.",
+        "Flag disconnected sessions that stay unreconnected and unclosed for an unusually long time as abandoned live sessions worth a forced logoff.",
+        "Cross-reference with the Security log's 4779 for the same session-disconnect event from the account-usage perspective."
+      ],
+      "false_positives": [
+        "Normal RDP client closure without explicit logoff, the default client behavior for most users",
+        "Idle-timeout or network-drop disconnects under normal remote-work conditions"
+      ],
+      "attack_techniques": [
+        {
+          "id": "T1021.001",
+          "name": "Remote Desktop Protocol"
+        },
+        {
+          "id": "T1563.002",
+          "name": "RDP Hijacking"
+        }
+      ],
+      "detection_query": "Event\n| where Source == \"Microsoft-Windows-TerminalServices-LocalSessionManager\" and EventID == 24\n| summarize DisconnectCount=count() by User, SessionID, bin(TimeGenerated, 1h)\n| where DisconnectCount > 5",
+      "related_attacks": [
+        "RDP session hijacking via disconnected sessions",
+        "Persistence through kept-alive background sessions"
+      ],
+      "artifektx_links": [
+        {
+          "id": "rdp-eventlogs",
+          "name": "RDP / TerminalServices Event Logs"
+        },
+        {
+          "id": "remote-desktop-protocol-rdp-usage",
+          "name": "Remote Desktop Protocol (RDP) Usage"
+        }
+      ],
+      "related_ids": [
+        "21",
+        "25",
+        "4779"
+      ]
+    },
+    {
+      "id": "25",
+      "name": "Session reconnection succeeded",
+      "log_source": "RDP",
+      "category": "Remote Access",
+      "priority": "Medium",
+      "description": "Logged when a previously disconnected session (see 24) is resumed, either from the same client or a different one. Because the session and its token survive a disconnect, a reconnect from a new Source Network Address is one of the strongest single indicators of RDP session hijacking available in this log.",
+      "key_fields": [
+        {
+          "field": "User",
+          "meaning": "Account whose session was reconnected."
+        },
+        {
+          "field": "Session ID",
+          "meaning": "Matches the original session's ID from its 21/24 events."
+        },
+        {
+          "field": "Source Network Address",
+          "meaning": "Client IP reconnecting to the session, or LOCAL."
+        }
+      ],
+      "normal_baseline": "Normal for users resuming a persistent RDP session after a dropped connection or an intentional disconnect from the same device.",
+      "sample_log": "Remote Desktop Services: Session reconnection succeeded:\n\nUser: CORP\\jsmith\nSession ID: 2\nSource Network Address: 10.20.4.51",
+      "anomalies": [
+        "A reconnect whose Source Network Address differs from the address recorded on the prior 24 disconnect for the same Session ID",
+        "Reconnects at hours inconsistent with the account's normal working pattern",
+        "Multiple reconnects to the same session from different source addresses in a short period"
+      ],
+      "attack_example": {
+        "scenario": "An attacker with local admin rights on a jump box hijacks a disconnected privileged session, reconnecting to the existing Session ID from a second host instead of the one that originally created it.",
+        "log": "Remote Desktop Services: Session reconnection succeeded:\n\nUser: CORP\\jdoe.admin\nSession ID: 7\nSource Network Address: 198.51.100.23\n\n[the 24 disconnect for Session ID 7 recorded Source Network Address 10.20.4.51, a different host]"
+      },
+      "investigation_steps": [
+        "Compare the reconnecting Source Network Address against the address on the matching 24 disconnect and the original 21/1149; any change deserves immediate follow-up.",
+        "Cross-reference with the Security log's 4778 session-reconnect event for the same Logon ID.",
+        "Pull process-creation events (4688/Sysmon-1) for the session immediately after reconnect to see what the new party did."
+      ],
+      "false_positives": [
+        "A user reconnecting from a second device or roaming profile under normal multi-device work patterns",
+        "Unstable VPN or network connectivity dropping and re-establishing the RDP session from the same physical location"
+      ],
+      "attack_techniques": [
+        {
+          "id": "T1021.001",
+          "name": "Remote Desktop Protocol"
+        },
+        {
+          "id": "T1563.002",
+          "name": "RDP Hijacking"
+        }
+      ],
+      "detection_query": "Event\n| where Source == \"Microsoft-Windows-TerminalServices-LocalSessionManager\" and EventID == 25\n| extend ReconnectAddr=Address\n| join kind=inner (\n    Event | where Source == \"Microsoft-Windows-TerminalServices-LocalSessionManager\" and EventID == 24 | extend DisconnectAddr=Address\n) on SessionID\n| where ReconnectAddr != DisconnectAddr",
+      "related_attacks": [
+        "RDP session hijacking",
+        "Living-off-the-land lateral movement via RDP"
+      ],
+      "artifektx_links": [
+        {
+          "id": "rdp-eventlogs",
+          "name": "RDP / TerminalServices Event Logs"
+        },
+        {
+          "id": "remote-desktop-protocol-rdp-usage",
+          "name": "Remote Desktop Protocol (RDP) Usage"
+        }
+      ],
+      "related_ids": [
+        "24",
+        "4778"
+      ]
+    },
+    {
+      "id": "106",
+      "name": "Task registered",
+      "log_source": "Task Scheduler",
+      "category": "Services",
+      "priority": "High",
+      "description": "Logged in the Microsoft-Windows-TaskScheduler/Operational log every time a new scheduled task is registered, recording the task's full path and the account that created it. Unlike the Security log's 4698, it doesn't carry the task's action/trigger XML, but it is enabled by default with no extra auditing configuration required, making it the most reliably available first signal of new scheduled-task persistence.",
+      "key_fields": [
+        {
+          "field": "TaskName",
+          "meaning": "Full path of the newly registered task, e.g. \\Acme\\BackupSync\\NightlyJob."
+        },
+        {
+          "field": "UserContext",
+          "meaning": "The account that registered the task."
+        }
+      ],
+      "normal_baseline": "Expected during software installs, Windows maintenance, and administrator-scheduled automation; volume tracks change-managed deployment activity.",
+      "sample_log": "User \"CORP\\jdoe.admin\" registered Task Scheduler task \"\\Acme\\BackupSync\\NightlyJob\"",
+      "anomalies": [
+        "A task registered by a machine account (COMPUTER$) or a low-privilege user account that has no business creating scheduled tasks",
+        "Task names designed to blend in with legitimate Microsoft or vendor tasks",
+        "Registration with no corresponding 4698 in the Security log, suggesting Object Access auditing gaps or an attempt to minimize footprint"
+      ],
+      "attack_example": {
+        "scenario": "Minutes after a phishing-delivered payload executes, a task disguised with a Microsoft-sounding name is registered by the compromised user's own account, re-establishing the attacker's foothold on every logon.",
+        "log": "User \"CORP\\k.patel\" registered Task Scheduler task \"\\Microsoft\\Windows\\WindowsUpdate\\SystemHealthCheck\""
+      },
+      "investigation_steps": [
+        "Pull the task's full definition from C:\\Windows\\System32\\Tasks\\<TaskName> or the matching Security log 4698 (if Object Access auditing is enabled) to see the actual command and trigger.",
+        "Check UserContext against the small set of accounts and tools expected to register tasks in this environment.",
+        "Look for a task name that mimics a Microsoft or vendor task but sits outside the expected \\Microsoft\\Windows\\ structure, or was registered by an unexpected account."
+      ],
+      "false_positives": [
+        "Software installers and Windows Update creating maintenance tasks during normal setup",
+        "Backup, monitoring, or patch-management agents registering their own scheduled tasks on every managed endpoint"
+      ],
+      "attack_techniques": [
+        {
+          "id": "T1053.005",
+          "name": "Scheduled Task"
+        }
+      ],
+      "detection_query": "Event\n| where Source == \"Microsoft-Windows-TaskScheduler\" and EventID == 106\n| where TaskName has_any (@\"\\Microsoft\\Windows\\\", \"Update\", \"Health\") and UserContext !endswith \"$\"",
+      "related_attacks": [
+        "Scheduled task persistence",
+        "Living-off-the-land persistence via Task Scheduler",
+        "Persistence mechanisms staged ahead of ransomware deployment"
+      ],
+      "artifektx_links": [
+        {
+          "id": "scheduled-tasks",
+          "name": "Scheduled Tasks"
+        }
+      ],
+      "related_ids": [
+        "4698",
+        "140",
+        "141"
+      ]
+    },
+    {
+      "id": "140",
+      "name": "Task updated",
+      "log_source": "Task Scheduler",
+      "category": "Services",
+      "priority": "Medium",
+      "description": "Logged when an existing scheduled task's registration is modified in the Task Scheduler operational log, the always-on counterpart to the Security log's 4702. Attackers sometimes prefer repointing an already-trusted, long-existing task rather than registering a new one that would stand out as unfamiliar.",
+      "key_fields": [
+        {
+          "field": "TaskName",
+          "meaning": "The scheduled task that was modified."
+        },
+        {
+          "field": "UserName",
+          "meaning": "The account that made the change."
+        }
+      ],
+      "normal_baseline": "Expected during software updates and routine administrative maintenance of existing tasks.",
+      "sample_log": "User \"CORP\\jdoe.admin\" updated Task Scheduler task \"\\Acme\\BackupSync\\NightlyJob\"",
+      "anomalies": [
+        "A long-dormant or system-owned task suddenly updated by an account outside its normal maintainers",
+        "Updates occurring outside documented change windows",
+        "An update immediately followed by that task's next scheduled run producing unexpected child processes"
+      ],
+      "attack_example": {
+        "scenario": "A years-old, already-whitelisted printer-maintenance task is quietly updated by a compromised account, hiding a new persistence mechanism inside a task nobody questions.",
+        "log": "User \"CORP\\svc_backup\" updated Task Scheduler task \"\\Microsoft\\Windows\\Printing\\PrinterCleanup\""
+      },
+      "investigation_steps": [
+        "Compare the task's new definition (from the Tasks folder XML or a matching 4702) against any earlier baseline to see exactly what changed.",
+        "Check whether UserName matches the task's expected owner/maintainer and whether the update falls inside a known change window.",
+        "If the updated action now points at PowerShell, a script in a user-writable path, or an unfamiliar binary, treat it with the same urgency as a new suspicious 106."
+      ],
+      "false_positives": [
+        "Legitimate software updates modifying their own previously-created task instead of removing and recreating it",
+        "Configuration-management tooling (GPO, SCCM) that periodically reasserts a task's intended state"
+      ],
+      "attack_techniques": [
+        {
+          "id": "T1053.005",
+          "name": "Scheduled Task"
+        }
+      ],
+      "detection_query": "Event\n| where Source == \"Microsoft-Windows-TaskScheduler\" and EventID == 140\n| project TimeGenerated, Computer, TaskName, UserName",
+      "related_attacks": [
+        "Persistence via modification of a pre-existing trusted scheduled task",
+        "Defense evasion by hijacking legitimate automation"
+      ],
+      "artifektx_links": [
+        {
+          "id": "scheduled-tasks",
+          "name": "Scheduled Tasks"
+        }
+      ],
+      "related_ids": [
+        "106",
+        "4702",
+        "141"
+      ]
+    },
+    {
+      "id": "141",
+      "name": "Task deleted",
+      "log_source": "Task Scheduler",
+      "category": "Services",
+      "priority": "High",
+      "description": "Logged when a scheduled task is removed from the system, the operational-log companion to the Security log's 4699. Because the task's XML definition is gone once deleted, this event plus any earlier 106/140 events or TaskCache registry remnants are often the only surviving evidence a task ever existed -- making it central to spotting the create-run-delete pattern attackers use to minimize their footprint.",
+      "key_fields": [
+        {
+          "field": "TaskName",
+          "meaning": "The full path of the task that was deleted."
+        },
+        {
+          "field": "UserName",
+          "meaning": "The account that deleted it."
+        }
+      ],
+      "normal_baseline": "Expected during software uninstalls and routine cleanup of completed or obsolete administrative tasks.",
+      "sample_log": "User \"CORP\\jdoe.admin\" deleted Task Scheduler task \"\\Acme\\BackupSync\\NightlyJob\"",
+      "anomalies": [
+        "A task deleted within minutes or hours of being registered (106), consistent with a create-run-delete persistence/execution pattern",
+        "Deletion performed by an account other than the one that originally registered the task",
+        "Task deletions with no matching prior 106/140 in the retained log window, suggesting the task predates current log retention or was created by another means such as a direct XML drop"
+      ],
+      "attack_example": {
+        "scenario": "An attacker registers a task to execute a payload once, waits for it to run, then deletes it within the hour to remove the persistence mechanism before a scheduled EDR sweep, leaving only the 106/141 pair in the operational log as evidence it ever ran.",
+        "log": "User \"CORP\\svc_backup\" deleted Task Scheduler task \"\\Microsoft\\Windows\\WindowsUpdate\\SystemHealthCheck\""
+      },
+      "investigation_steps": [
+        "Pair every 141 with its earlier 106/140 for the same TaskName to compute how long the task existed; a short lifespan is a strong persistence-cleanup signal.",
+        "Since the definition XML is gone, pull the task's action/trigger from the 106 registration event, a corresponding 4698 in the Security log, or TaskCache registry remnants under the Schedule\\TaskCache key.",
+        "Check whether the deleting account matches the one that created the task."
+      ],
+      "false_positives": [
+        "Normal software uninstall or cleanup removing a task it no longer needs",
+        "Administrators removing obsolete or completed one-time maintenance tasks"
+      ],
+      "attack_techniques": [
+        {
+          "id": "T1053.005",
+          "name": "Scheduled Task"
+        }
+      ],
+      "detection_query": "Event\n| where Source == \"Microsoft-Windows-TaskScheduler\" and EventID in (106, 141)\n| summarize Registered=minif(TimeGenerated, EventID==106), Deleted=minif(TimeGenerated, EventID==141) by TaskName\n| extend LifespanMin = datetime_diff('minute', Deleted, Registered)\n| where LifespanMin between (0 .. 120)",
+      "related_attacks": [
+        "Create-run-delete scheduled task execution pattern",
+        "Anti-forensic cleanup of persistence mechanisms"
+      ],
+      "artifektx_links": [
+        {
+          "id": "scheduled-tasks",
+          "name": "Scheduled Tasks"
+        }
+      ],
+      "related_ids": [
+        "106",
+        "140"
+      ]
+    },
+    {
+      "id": "1116",
+      "name": "Antimalware platform detected malware or other potentially unwanted software",
+      "log_source": "Defender",
+      "category": "Endpoint Defense",
+      "priority": "Critical",
+      "description": "Logged the moment Microsoft Defender Antivirus's engine detects malware or a potentially unwanted application, whether via signature match, heuristics, behavior monitoring, or cloud-delivered protection. It fires before any remediation happens -- the follow-up 1117 records whether the platform actually acted on it -- so a 1116 with no matching 1117 means a live, unremediated threat is sitting on the host.",
+      "key_fields": [
+        {
+          "field": "Name",
+          "meaning": "Threat name assigned by Defender's detection signature or engine."
+        },
+        {
+          "field": "Severity",
+          "meaning": "Low, Moderate, High, or Severe."
+        },
+        {
+          "field": "Category",
+          "meaning": "Threat category, e.g. Trojan, Tool, or PUA."
+        },
+        {
+          "field": "Path",
+          "meaning": "Full file path (or process/registry location) of the detected item."
+        },
+        {
+          "field": "Detection Source",
+          "meaning": "What found it: User, Real-Time Protection, IOAV, NIS, AMSI, ELAM, or remote attestation."
+        },
+        {
+          "field": "Process Name",
+          "meaning": "The process the threat was running in or under."
+        },
+        {
+          "field": "User",
+          "meaning": "Domain\\User the detection is attributed to."
+        }
+      ],
+      "normal_baseline": "Sporadic and low-volume in a healthy environment; occasional PUA/adware detections from routine browsing or downloads, rare true-positive malware hits.",
+      "sample_log": "The antimalware platform detected malware or other potentially unwanted software.\n\nName: Trojan:Win32/Wacatac.B!ml\nID: 2147744671\nSeverity: Severe\nCategory: Trojan\nPath: C:\\Users\\k.patel\\AppData\\Local\\Temp\\invoice_0912.exe\nDetection Origin: Local machine\nDetection Type: Heuristics\nDetection Source: Real-Time Protection\nProcess Name: C:\\Users\\k.patel\\AppData\\Local\\Temp\\invoice_0912.exe\nSignature Version: 1.413.1022.0\nEngine Version: 1.1.24010.10\nUser: CORP\\k.patel",
+      "anomalies": [
+        "A 1116 with no corresponding 1117 remediation shortly after, meaning an active threat remains unresolved",
+        "Repeated 1116 detections for the same threat name/path, suggesting reinfection or a dropper that keeps re-placing the file",
+        "Detections in Temp, AppData, or user-writable staging directories immediately preceding new process creation or scheduled-task activity",
+        "A cluster of 1116 detections across many hosts in a short window, consistent with a spreading dropper or worm"
+      ],
+      "attack_example": {
+        "scenario": "A phishing attachment drops a credential-stealing trojan into the user's Temp folder; Defender's real-time protection flags it via heuristics moments before the user would have executed it.",
+        "log": "The antimalware platform detected malware or other potentially unwanted software.\n\nName: Trojan:Win32/Wacatac.B!ml\nID: 2147744671\nSeverity: Severe\nCategory: Trojan\nPath: C:\\Users\\k.patel\\AppData\\Local\\Temp\\invoice_0912.exe\nDetection Origin: Local machine\nDetection Type: Heuristics\nDetection Source: Real-Time Protection\nProcess Name: C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE\nSignature Version: 1.413.1022.0\nEngine Version: 1.1.24010.10\nUser: CORP\\k.patel"
+      },
+      "investigation_steps": [
+        "Check for a matching 1117 within seconds to confirm whether the threat was actually remediated (Clean/Quarantine/Remove) or only allowed or left in place.",
+        "Pivot on Path and Process Name to Sysmon-1 process-creation events for the same host and time to see how the file arrived and whether it ran before detection.",
+        "If no 1117 follows, isolate the host and manually verify the file's disposition rather than assuming Defender handled it."
+      ],
+      "false_positives": [
+        "Legitimate PUA detections for bundled toolbars, cracked software, or aggressive adware a user downloaded knowingly",
+        "Security-testing files (e.g. EICAR) or authorized red-team tooling deliberately flagged during an exercise"
+      ],
+      "attack_techniques": [
+        {
+          "id": "T1562.001",
+          "name": "Disable or Modify Tools"
+        }
+      ],
+      "detection_query": "Event\n| where Source == \"Microsoft-Windows-Windows Defender\" and EventID == 1116\n| join kind=leftouter (\n    Event | where Source == \"Microsoft-Windows-Windows Defender\" and EventID == 1117\n) on Computer, ThreatName\n| where isempty(Action)",
+      "related_attacks": [
+        "Initial-access malware caught before execution",
+        "EDR/AV tampering prior to ransomware deployment",
+        "Reinfection loops from a persistent dropper"
+      ],
+      "artifektx_links": [],
+      "related_ids": [
+        "1117",
+        "Sysmon-1"
+      ]
+    },
+    {
+      "id": "1117",
+      "name": "Antimalware platform performed an action to protect your system from malware or other potentially unwanted software",
+      "log_source": "Defender",
+      "category": "Endpoint Defense",
+      "priority": "High",
+      "description": "Logged immediately after a 1116 detection once Defender takes a remediation action -- Clean, Quarantine, Remove, Allow, Block, or No action -- recording exactly what happened to the threat found in the preceding event. The Action field is the whole story: Quarantine, Remove, and Clean mean the platform neutralized it, while Allow or No action mean the threat was left in place, whether deliberately configured or due to a tamper/policy exception.",
+      "key_fields": [
+        {
+          "field": "Name",
+          "meaning": "Threat name, matching the preceding 1116."
+        },
+        {
+          "field": "Severity",
+          "meaning": "Low, Moderate, High, or Severe."
+        },
+        {
+          "field": "Category",
+          "meaning": "Threat category."
+        },
+        {
+          "field": "Action",
+          "meaning": "The remediation action taken: Clean, Quarantine, Remove, Allow, User defined, No action, or Block."
+        },
+        {
+          "field": "Process Name",
+          "meaning": "Process associated with the remediation."
+        },
+        {
+          "field": "User",
+          "meaning": "Domain\\User context."
+        }
+      ],
+      "normal_baseline": "Follows essentially every 1116 within seconds; the large majority show Action = Quarantine or Remove in a healthy, default-configured environment.",
+      "sample_log": "The antimalware platform performed an action to protect your system from malware or other potentially unwanted software.\n\nName: Trojan:Win32/Wacatac.B!ml\nID: 2147744671\nSeverity: Severe\nCategory: Trojan\nPath: C:\\Users\\k.patel\\AppData\\Local\\Temp\\invoice_0912.exe\nUser: CORP\\k.patel\nProcess Name: C:\\Windows\\System32\\MsMpEng.exe\nAction: Quarantine\nSignature Version: 1.413.1022.0\nEngine Version: 1.1.24010.10",
+      "anomalies": [
+        "Action = Allow or No action for a High/Severe-severity threat, meaning it was left in place",
+        "A 1117 whose remediation attempt failed, meaning the threat is still live even though an action was logged",
+        "A cluster of Allow actions appearing right after a policy or exclusion change, suggesting ThreatSeverityDefaultAction was tampered with"
+      ],
+      "attack_example": {
+        "scenario": "An attacker with local admin rights sets ThreatSeverityDefaultAction to None before dropping their toolkit, so every subsequent 1116 detection is followed by a 1117 with Action: Allow instead of the expected Quarantine, letting the malware persist while still generating a paper trail that looks like Defender is working.",
+        "log": "The antimalware platform performed an action to protect your system from malware or other potentially unwanted software.\n\nName: HackTool:Win64/Mimikatz.A\nID: 2147747903\nSeverity: Severe\nCategory: Tool\nPath: C:\\Users\\Public\\m64.exe\nUser: CORP\\svc_backup\nProcess Name: C:\\Windows\\System32\\MsMpEng.exe\nAction: Allow"
+      },
+      "investigation_steps": [
+        "Check Action on every 1117 tied to a High/Severe 1116; anything other than Clean/Quarantine/Remove/Block needs manual follow-up.",
+        "If Action is Allow or No action, check for a recent Defender configuration-change event or a ThreatSeverityDefaultAction/exclusion modification around the same time.",
+        "Confirm the remediation actually succeeded; a failed action leaves the threat live even though a 1117 was logged."
+      ],
+      "false_positives": [
+        "Deliberately configured Allow actions in specialized environments (industrial control systems, legacy line-of-business tooling) where automatic remediation would break production",
+        "Tamper Protection itself blocking a user's manual attempt to restore a quarantined false positive, surfacing as a failed action"
+      ],
+      "attack_techniques": [
+        {
+          "id": "T1562.001",
+          "name": "Disable or Modify Tools"
+        }
+      ],
+      "detection_query": "Event\n| where Source == \"Microsoft-Windows-Windows Defender\" and EventID == 1117\n| where Action in (\"Allow\", \"No action\") and Severity in (\"High\", \"Severe\")",
+      "related_attacks": [
+        "EDR/AV tampering prior to ransomware deployment",
+        "Policy-based evasion via ThreatSeverityDefaultAction abuse"
+      ],
+      "artifektx_links": [],
+      "related_ids": [
+        "1116",
+        "5001"
+      ]
+    },
+    {
+      "id": "5001",
+      "name": "Real-time protection disabled",
+      "log_source": "Defender",
+      "category": "Endpoint Defense",
+      "priority": "Critical",
+      "description": "Logged the instant Microsoft Defender Antivirus's real-time (on-access) protection is turned off, whether through Group Policy, PowerShell (Set-MpPreference -DisableRealtimeMonitoring $true), the Windows Security app, or a malicious actor with sufficient privilege and no active Tamper Protection. Because real-time protection is what scans files as they're written and processes as they launch, disabling it opens a window where malware can execute completely unseen by Defender until the next scheduled scan.",
+      "key_fields": [
+        {
+          "field": "Computer / TimeCreated",
+          "meaning": "When and where protection was disabled; the event itself carries no actor or process attribution, one of its most important investigative limitations."
+        }
+      ],
+      "normal_baseline": "Rare in a healthy environment; expected only during approved third-party AV migrations, specific troubleshooting windows, or when a managed third-party antivirus product takes over real-time scanning (Windows automatically disables its own real-time protection in that case).",
+      "sample_log": "Real-time protection is disabled.",
+      "anomalies": [
+        "Any 5001 with no corresponding change ticket, approved AV migration, or known third-party AV installation",
+        "5001 immediately preceding new, unscanned process creation or file-write activity from an unfamiliar binary",
+        "5001 followed shortly by 5012 (antivirus scanning disabled), indicating a full teardown of Defender's active protection rather than a single-feature change"
+      ],
+      "attack_example": {
+        "scenario": "Minutes before deploying ransomware across the environment, an attacker with domain admin rights pushes a Group Policy change that disables real-time protection fleet-wide, clearing the way for their encryptor to run without triggering a 1116 detection.",
+        "log": "Real-time protection is disabled."
+      },
+      "investigation_steps": [
+        "Because the event itself carries no user/process attribution, immediately pivot to registry/policy-application events, PowerShell 4104 script-block logs, and 4688/Sysmon-1 process creation around the same timestamp to find what disabled it.",
+        "Check Group Policy change history and MpPreference configuration for a recent DisableRealtimeMonitoring change.",
+        "Treat this as an emergency signal on any host without a documented reason; verify Tamper Protection status and re-enable immediately if unauthorized."
+      ],
+      "false_positives": [
+        "A newly installed, Microsoft-approved third-party antivirus product automatically taking over and disabling Windows Defender's own real-time scanning",
+        "Documented troubleshooting or performance testing performed by IT with real-time protection intentionally toggled off temporarily"
+      ],
+      "attack_techniques": [
+        {
+          "id": "T1562.001",
+          "name": "Disable or Modify Tools"
+        }
+      ],
+      "detection_query": "Event\n| where Source == \"Microsoft-Windows-Windows Defender\" and EventID == 5001\n| project TimeGenerated, Computer",
+      "related_attacks": [
+        "EDR/AV tampering prior to ransomware deployment",
+        "Defense evasion ahead of fileless or living-off-the-land payload execution"
+      ],
+      "artifektx_links": [],
+      "related_ids": [
+        "5012",
+        "1116",
+        "1117"
+      ]
+    },
+    {
+      "id": "5012",
+      "name": "Scanning for viruses disabled",
+      "log_source": "Defender",
+      "category": "Endpoint Defense",
+      "priority": "Critical",
+      "description": "Logged when Microsoft Defender Antivirus's virus-scanning capability itself is turned off, a deeper disable than 5001's real-time toggle -- this removes antivirus scanning entirely rather than just the on-access component. Like 5001, it carries no built-in actor attribution, so it must be correlated against policy, script, and process logs to identify who or what triggered it.",
+      "key_fields": [
+        {
+          "field": "Computer / TimeCreated",
+          "meaning": "When and where antivirus scanning was disabled."
+        }
+      ],
+      "normal_baseline": "Very rare in a healthy environment; expected only during a deliberate, approved antivirus product migration or vendor-directed troubleshooting.",
+      "sample_log": "Scanning for viruses is disabled.",
+      "anomalies": [
+        "Any 5012 outside a documented AV-migration or vendor-troubleshooting window",
+        "5012 appearing alongside 5001 (real-time protection disabled) and 5010 (antispyware scanning disabled), indicating a full protection teardown rather than an isolated setting change",
+        "5012 shortly after a new administrative logon or an unfamiliar PowerShell/registry-modification event"
+      ],
+      "attack_example": {
+        "scenario": "As part of a broader defense-evasion sequence, a post-exploitation script disables real-time protection, virus scanning, and spyware scanning in quick succession before dropping and running its final payload, betting that no single change looks alarming enough on its own to trigger a response.",
+        "log": "Scanning for viruses is disabled."
+      },
+      "investigation_steps": [
+        "Check for 5001 and 5010 in the same narrow window; a cluster of these disable events together is a much stronger signal than any one alone.",
+        "Correlate against 4104 PowerShell script-block logs, 4688/Sysmon-1 process creation, and registry-modification events around the same timestamp to identify the actor and method.",
+        "Re-enable antivirus scanning immediately and treat the host as compromised pending investigation if no legitimate change record exists."
+      ],
+      "false_positives": [
+        "Approved migration to a different antivirus product that explicitly disables Defender's native scanning",
+        "Vendor-directed troubleshooting steps performed by IT with a documented change record"
+      ],
+      "attack_techniques": [
+        {
+          "id": "T1562.001",
+          "name": "Disable or Modify Tools"
+        }
+      ],
+      "detection_query": "Event\n| where Source == \"Microsoft-Windows-Windows Defender\" and EventID in (5001, 5010, 5012)\n| summarize Disabled=make_set(EventID) by Computer, bin(TimeGenerated, 10m)\n| where array_length(Disabled) >= 2",
+      "related_attacks": [
+        "EDR/AV tampering prior to ransomware deployment",
+        "Full antivirus teardown as part of a defense-evasion chain"
+      ],
+      "artifektx_links": [],
+      "related_ids": [
+        "5001"
+      ]
+    },
+    {
+      "id": "8001",
+      "name": "Client NTLM auditing",
+      "log_source": "NTLM",
+      "category": "Authentication",
+      "priority": "Medium",
+      "description": "Logged on the client computer in the Microsoft-Windows-NTLM/Operational log when Network Security: Restrict NTLM: Audit Incoming NTLM Traffic is enabled, recording every outbound NTLM authentication attempt that computer's own applications make to a remote server. It is the client-side leg of a three-log NTLM audit trail (8001 on the client, 8003 on the member server, 8004 on the domain controller) used to map exactly which applications still rely on NTLM instead of Kerberos.",
+      "key_fields": [
+        {
+          "field": "Target server",
+          "meaning": "Name or IP address of the server the NTLM request was sent to; a raw IP or non-FQDN name here explains why Kerberos wasn't used."
+        },
+        {
+          "field": "Supplied user / Supplied domain",
+          "meaning": "The account credentials presented for the NTLM authentication attempt."
+        },
+        {
+          "field": "Name of client process",
+          "meaning": "The application or service that made the request."
+        },
+        {
+          "field": "User identity of client process",
+          "meaning": "The credentials the calling process itself runs under, which can differ from the supplied user."
+        }
+      ],
+      "normal_baseline": "Expected wherever legacy applications, IP-based connections, or workgroup/local-account access still require NTLM; volume should track known legacy dependencies once an environment has been mapped.",
+      "sample_log": "The computer attempted to authenticate using NTLM to a remote server.\n\nTarget server: 10.20.6.15\nSupplied user: jsmith\nSupplied domain: CORP\nName of client process: C:\\Program Files\\Acme\\LegacyBillingApp\\billing.exe\nUser identity of client process: CORP\\jsmith",
+      "anomalies": [
+        "Target server expressed as a raw IP address rather than a NetBIOS/FQDN name, forcing NTLM on a network that should default to Kerberos",
+        "Name of client process pointing to an unfamiliar or newly-installed binary rather than a known legacy application",
+        "A spike in 8001 volume from one workstation shortly after a suspicious logon, consistent with lateral-movement tooling authenticating outbound via NTLM"
+      ],
+      "attack_example": {
+        "scenario": "Lateral-movement tooling on a compromised workstation authenticates outbound to a file server by IP address using harvested credentials, generating an 8001 event for a process name that has never appeared on that host before.",
+        "log": "The computer attempted to authenticate using NTLM to a remote server.\n\nTarget server: 198.51.100.9\nSupplied user: svc_backup\nSupplied domain: CORP\nName of client process: C:\\Users\\Public\\psx.exe\nUser identity of client process: CORP\\jdoe.admin"
+      },
+      "investigation_steps": [
+        "Check Name of client process against known legacy or vendor applications for this host; an unfamiliar or newly-dropped binary making NTLM calls is a strong signal.",
+        "Follow the trail to the corresponding 8003 (member server) or 8004 (domain controller) event to confirm whether the authentication attempt succeeded.",
+        "Resolve Target server to see whether it was addressed by IP (forcing NTLM) or by name (suggesting NTLM was explicitly chosen or Kerberos wasn't available)."
+      ],
+      "false_positives": [
+        "Legacy line-of-business applications hardcoded to use NTLM or to connect by IP address",
+        "Backup, monitoring, or RMM agents that authenticate to infrastructure by IP as part of normal operation"
+      ],
+      "attack_techniques": [
+        {
+          "id": "T1550.002",
+          "name": "Pass the Hash"
+        }
+      ],
+      "detection_query": "Event\n| where Source == \"Microsoft-Windows-NTLM\" and EventID == 8001\n| where TargetServer matches regex @\"^\\d+\\.\\d+\\.\\d+\\.\\d+$\"\n| summarize Requests=count() by Computer, ClientProcessName, bin(TimeGenerated, 15m)",
+      "related_attacks": [
+        "Pass-the-Hash",
+        "Lateral movement using harvested NTLM credentials",
+        "Legacy-protocol downgrade abuse"
+      ],
+      "artifektx_links": [
+        {
+          "id": "authentication-events",
+          "name": "Authentication Events"
+        }
+      ],
+      "related_ids": [
+        "8004",
+        "4776",
+        "4624"
+      ]
+    },
+    {
+      "id": "8004",
+      "name": "Domain controller NTLM authentication auditing",
+      "log_source": "NTLM",
+      "category": "Authentication",
+      "priority": "High",
+      "description": "Logged on the domain controller in the Microsoft-Windows-NTLM/Operational log when Network Security: Restrict NTLM: Audit NTLM authentication in this domain is enabled, recording every NTLM authentication request that traverses that DC, whether or not NTLM would actually be blocked. It is the domain-wide vantage point in the NTLM audit trail and the natural starting point for tracing NTLM usage back to the originating client via the paired 8001/8003 events.",
+      "key_fields": [
+        {
+          "field": "Secure Channel name",
+          "meaning": "The member server the client connected to for the transitive logon, where the corresponding 8003 event should be investigated next."
+        },
+        {
+          "field": "User name",
+          "meaning": "The account whose credentials were authenticated."
+        },
+        {
+          "field": "Domain name",
+          "meaning": "The domain the account belongs to."
+        },
+        {
+          "field": "Workstation name",
+          "meaning": "The client computer the user name is associated with for this authentication."
+        }
+      ],
+      "normal_baseline": "Expected wherever legacy applications, local/workgroup accounts, or IP-based resource access still force NTLM against domain-joined servers; a mapped environment should show a stable, small set of known Secure Channel names and workstations.",
+      "sample_log": "The domain controller received an NTLM authentication request.\n\nSecure Channel name: SRV-FILE03\nUser name: jsmith\nDomain name: CORP\nWorkstation name: WKS-FIN07\nSecure Channel type: 2",
+      "anomalies": [
+        "A Workstation name that has never previously appeared for that User name, suggesting credential theft and reuse from a new host",
+        "NTLM authentication volume against a Secure Channel name that should be Kerberos-only",
+        "A burst of 8004 events for many different User name values against one Workstation name, consistent with credential-stuffing or a relay chain"
+      ],
+      "attack_example": {
+        "scenario": "An NTLM relay attack forces a domain-joined server to authenticate to an attacker-controlled listener, which relays the captured NTLM negotiation to the domain controller for validation, producing an 8004 event whose Workstation name doesn't match the server the Secure Channel name says initiated it.",
+        "log": "The domain controller received an NTLM authentication request.\n\nSecure Channel name: SRV-FILE03\nUser name: SRV-FILE03$\nDomain name: CORP\nWorkstation name: WKS-FIN07\nSecure Channel type: 2\n\n[unexpected: the SRV-FILE03 machine account is being authenticated via a request whose Workstation name is a different host, not SRV-FILE03 itself]"
+      },
+      "investigation_steps": [
+        "Follow Secure Channel name to the member server and pull its matching 8003 event for the same timeframe to see process-level detail.",
+        "If the 8003 event's PID indicates SYSTEM (kernel-mode/SMB traffic), continue to the 8001 event on the Workstation name to identify the actual calling application.",
+        "Check whether Workstation name is consistent with User name's normal logon history; a mismatch is a strong pivot signal."
+      ],
+      "false_positives": [
+        "Local user accounts connecting to a file server, which legitimately requires NTLM regardless of Kerberos availability elsewhere",
+        "Legacy applications and appliances that authenticate to domain resources using NTLM by design"
+      ],
+      "attack_techniques": [
+        {
+          "id": "T1110",
+          "name": "Brute Force"
+        },
+        {
+          "id": "T1557.001",
+          "name": "Name Resolution Poisoning and SMB Relay"
+        }
+      ],
+      "detection_query": "Event\n| where Source == \"Microsoft-Windows-NTLM\" and EventID == 8004\n| summarize Workstations=make_set(WorkstationName) by UserName, bin(TimeGenerated, 1d)\n| where array_length(Workstations) > 3",
+      "related_attacks": [
+        "NTLM relay attacks (e.g. PetitPotam-style coercion)",
+        "Pass-the-Hash",
+        "Legacy-protocol downgrade abuse"
+      ],
+      "artifektx_links": [
+        {
+          "id": "authentication-events",
+          "name": "Authentication Events"
+        }
+      ],
+      "related_ids": [
+        "8001",
+        "4776",
+        "4624"
       ]
     }
   ]
