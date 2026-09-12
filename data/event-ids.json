@@ -1,7 +1,7 @@
 {
   "generated": "2026-09-10",
-  "scope": "Security log (40 events) + PowerShell operational log (4 events) + Sysmon (29 events) + RDP session logs (6 events) + Task Scheduler operational log (3 events) + Windows Defender operational log (4 events) + NTLM auditing (2 events).",
-  "count": 88,
+  "scope": "Security log (57 events) + PowerShell operational log (4 events) + Sysmon (29 events) + RDP session logs (6 events) + Task Scheduler operational log (3 events) + Windows Defender operational log (4 events) + NTLM auditing (2 events).",
+  "count": 105,
   "note": "Sample logs and attack examples use the real Windows Security auditing field templates (verified against the field-by-field encyclopedia at ultimatewindowssecurity.com), with fictional CORP domain values and RFC 5737 documentation-range IPs (192.0.2.0/24, 198.51.100.0/24, 203.0.113.0/24) for anything external or attacker-controlled.",
   "events": [
     {
@@ -88,7 +88,14 @@
         "4778",
         "1149",
         "21",
-        "25"
+        "25",
+        "4662",
+        "4704",
+        "4705",
+        "4798",
+        "4799",
+        "5379",
+        "4647"
       ]
     },
     {
@@ -229,7 +236,8 @@
         "4624",
         "4778",
         "4779",
-        "23"
+        "23",
+        "4647"
       ]
     },
     {
@@ -347,7 +355,15 @@
       ],
       "related_ids": [
         "4624",
-        "4732"
+        "4732",
+        "4704",
+        "4705",
+        "4765",
+        "4766",
+        "4794",
+        "4798",
+        "4799",
+        "4611"
       ]
     },
     {
@@ -946,7 +962,8 @@
         }
       ],
       "related_ids": [
-        "4689"
+        "4689",
+        "5379"
       ]
     },
     {
@@ -1275,7 +1292,10 @@
           "name": "Sticky Keys Backdoor"
         }
       ],
-      "related_ids": []
+      "related_ids": [
+        "4794",
+        "4614"
+      ]
     },
     {
       "id": "5140",
@@ -1740,7 +1760,10 @@
       ],
       "related_ids": [
         "4768",
-        "4769"
+        "4769",
+        "4704",
+        "4705",
+        "4706"
       ]
     },
     {
@@ -1795,7 +1818,9 @@
         "Privilege escalation via token manipulation"
       ],
       "related_ids": [
-        "4672"
+        "4672",
+        "4704",
+        "4705"
       ]
     },
     {
@@ -1849,7 +1874,9 @@
       ],
       "related_ids": [
         "4663",
-        "4660"
+        "4660",
+        "4661",
+        "4662"
       ]
     },
     {
@@ -1907,7 +1934,9 @@
       ],
       "related_ids": [
         "4656",
-        "4663"
+        "4663",
+        "4661",
+        "4662"
       ]
     },
     {
@@ -1964,7 +1993,9 @@
       ],
       "related_ids": [
         "4656",
-        "4660"
+        "4660",
+        "4661",
+        "4662"
       ]
     },
     {
@@ -2020,7 +2051,9 @@
         "Defense evasion by weakening protections on security tooling directories"
       ],
       "related_ids": [
-        "4663"
+        "4663",
+        "4662",
+        "4742"
       ]
     },
     {
@@ -2134,7 +2167,9 @@
       ],
       "related_ids": [
         "4732",
-        "4738"
+        "4738",
+        "4741",
+        "4742"
       ]
     },
     {
@@ -2197,7 +2232,8 @@
       ],
       "related_ids": [
         "4720",
-        "4728"
+        "4728",
+        "4735"
       ]
     },
     {
@@ -2265,7 +2301,9 @@
       "related_ids": [
         "4720",
         "4732",
-        "4964"
+        "4964",
+        "4735",
+        "4765"
       ]
     },
     {
@@ -2329,7 +2367,9 @@
       ],
       "related_ids": [
         "4720",
-        "4738"
+        "4738",
+        "4741",
+        "4742"
       ]
     },
     {
@@ -5415,6 +5455,1085 @@
         "8001",
         "4776",
         "4624"
+      ]
+    },
+    {
+      "id": "4661",
+      "name": "A handle to an object was requested",
+      "log_source": "Security",
+      "category": "Object Access",
+      "priority": "Medium",
+      "description": "Logged when a process requests a handle to a SAM (Security Account Manager) object or an AD object exposed through the SAM interface, such as SAM_DOMAIN or SAM_USER. It is the SAM-object counterpart to 4656 and precedes any actual read/write, which is why it is a common first indicator of local or remote account/group enumeration tooling.",
+      "key_fields": [
+        {
+          "field": "Subject > Account Name / Account Domain / Logon ID",
+          "meaning": "The account and logon session that requested the handle."
+        },
+        {
+          "field": "Object > Object Server / Object Type / Object Name",
+          "meaning": "Identifies the SAM object targeted, e.g. Object Server 'SAM' with a type like SAM_DOMAIN or SAM_USER."
+        },
+        {
+          "field": "Object > Handle ID",
+          "meaning": "Correlates this handle open to the matching close (4658) or subsequent access event."
+        },
+        {
+          "field": "Process Information > Process ID / Process Name",
+          "meaning": "The executable that requested the handle."
+        },
+        {
+          "field": "Access Request Information > Accesses / Access Mask",
+          "meaning": "The specific rights requested against the object, e.g. read or enumerate."
+        },
+        {
+          "field": "Access Request Information > Properties",
+          "meaning": "Additional access/property-level detail requested for the operation, similar in structure to the Properties field in 4662."
+        }
+      ],
+      "normal_baseline": "High-volume and largely internal to LSASS/SAM operations; Microsoft's own guidance treats bulk 4661 activity as noise unless SACLs are scoped to specific high-value SAM objects, so most environments see a steady low-signal stream from normal logons and account lookups.",
+      "sample_log": "A handle to an object was requested.\n\nSubject:\n\tSecurity ID:\t\tCORP\\jsmith\n\tAccount Name:\t\tjsmith\n\tAccount Domain:\t\tCORP\n\tLogon ID:\t\t0x8A22F10\n\nObject:\n\tObject Server:\t\tSAM\n\tObject Type:\t\tSAM_DOMAIN\n\tObject Name:\t\tS-1-5-21-3623811015-3361044348-30300820\n\tHandle ID:\t\t0x1a94\n\nProcess Information:\n\tProcess ID:\t\t0x3d8\n\tProcess Name:\t\tC:\\Windows\\System32\\dsa.msc\n\nAccess Request Information:\n\tTransaction ID:\t\t{00000000-0000-0000-0000-000000000000}\n\tAccesses:\t\tReadControl\n\t\t\t\tList contents\n\tAccess Mask:\t\t0x20004\n\tPrivileges Used for Access Check:\t-\n\tRestricted SID Count:\t0",
+      "anomalies": [
+        "A burst of 4661 handle requests against SAM_DOMAIN/SAM_USER objects from a non-administrative account or an unmanaged workstation",
+        "Process Name is an unfamiliar or scripting-language binary (PowerShell, python, a custom .NET tool) rather than expected admin consoles like dsa.msc, mmc.exe, or PowerShell AD modules run by IT",
+        "4661 activity that has no matching 4658 handle close shortly after, or is immediately followed by a 4662 against the same Handle ID exercising broad read rights"
+      ],
+      "attack_example": {
+        "scenario": "An attacker running a custom SAMR-based enumeration tool from a compromised workstation repeatedly opens handles to SAM_DOMAIN and SAM_USER objects to walk RIDs and harvest the full user/group list, a common precursor to a targeted password-spray campaign.",
+        "log": "A handle to an object was requested.\n\nSubject:\n\tSecurity ID:\t\tCORP\\svc_helper02\n\tAccount Name:\t\tsvc_helper02\n\tAccount Domain:\t\tCORP\n\tLogon ID:\t\t0x9A11D02\n\nObject:\n\tObject Server:\t\tSAM\n\tObject Type:\t\tSAM_DOMAIN\n\tObject Name:\t\tS-1-5-21-3623811015-3361044348-30300820\n\tHandle ID:\t\t0x2f10\n\nProcess Information:\n\tProcess ID:\t\t0x1a4c\n\tProcess Name:\t\tC:\\Users\\Public\\samr_enum.exe\n\nAccess Request Information:\n\tTransaction ID:\t\t{00000000-0000-0000-0000-000000000000}\n\tAccesses:\t\tList contents\n\t\t\t\tRead property\n\tAccess Mask:\t\t0x30\n\tPrivileges Used for Access Check:\t-\n\tRestricted SID Count:\t0"
+      },
+      "investigation_steps": [
+        "Correlate the Handle ID forward to a 4658 (handle closed) or 4662 (operation performed) to see what, if anything, was actually done with the handle.",
+        "Check Process Name against known-good administrative tooling for this environment; an unrecognized binary requesting SAM object handles is the strongest single signal.",
+        "Baseline the requesting account: is it a designated admin, service account, or monitoring tool that legitimately queries SAM/AD, or an account with no prior history of this behavior?",
+        "If volume is high, confirm whether the SAM Object Access auditing subcategory is scoped narrowly (e.g. to AdminSDHolder-protected objects) rather than enabled broadly, since broad auditing generates mostly benign noise."
+      ],
+      "false_positives": [
+        "Routine LSASS/SAM internal operations and normal logon processing, which Microsoft explicitly calls out as high-volume and low-value unless SACLs are narrowly targeted",
+        "Legitimate admin consoles (Active Directory Users and Computers, PowerShell AD cmdlets) opening SAM object handles as part of normal account administration"
+      ],
+      "attack_techniques": [
+        {
+          "id": "T1003.002",
+          "name": "OS Credential Dumping: Security Account Manager"
+        }
+      ],
+      "detection_query": "SecurityEvent\n| where EventID == 4661\n| where ObjectType has_any (\"SAM_DOMAIN\", \"SAM_USER\")\n| where SubjectUserName !in (KnownAdminAccounts)",
+      "related_attacks": [
+        "SAMR-based account and group enumeration (e.g. via BloodHound, custom SAMR tooling)",
+        "Reconnaissance preceding a targeted password-spray or credential-stuffing campaign"
+      ],
+      "artifektx_links": [
+        {
+          "id": "sam-hive",
+          "name": "SAM (Security Account Manager) Hive"
+        }
+      ],
+      "related_ids": [
+        "4656",
+        "4663",
+        "4660",
+        "4662"
+      ]
+    },
+    {
+      "id": "4662",
+      "name": "An operation was performed on an object",
+      "log_source": "Security",
+      "category": "Object Access",
+      "priority": "Critical",
+      "description": "Logged when an operation is performed on an Active Directory object that has an appropriate SACL configured, with the Properties field naming exactly which AD attributes or extended rights were exercised. This is the canonical DCSync-detection event: a 4662 where the Properties field contains the DS-Replication-Get-Changes or DS-Replication-Get-Changes-All GUIDs, and the requesting account is not a domain controller's computer account, is a near-definitive sign of directory replication being abused to pull password hashes.",
+      "key_fields": [
+        {
+          "field": "Subject > Account Name / Account Domain / Logon ID",
+          "meaning": "The account that performed the operation. For DCSync detection, checking whether this is a machine account (ends in $) versus a user/service account is the key pivot."
+        },
+        {
+          "field": "Object > Object Type / Object Name",
+          "meaning": "Object Type is an AD schema class GUID (e.g. domainDNS); Object Name is the distinguished name of the object, e.g. the domain root DN for a replication request."
+        },
+        {
+          "field": "Operation Type",
+          "meaning": "Typically 'Object Access' for this event."
+        },
+        {
+          "field": "Accesses / Access Mask",
+          "meaning": "The type of access exercised, such as Control Access (0x100), the access type used for extended-rights operations like replication."
+        },
+        {
+          "field": "Properties",
+          "meaning": "A GUID or list of GUIDs identifying the specific AD extended right or property set exercised. DS-Replication-Get-Changes is {1131f6aa-9c07-11d1-f79f-00c04fc2dcd2} and DS-Replication-Get-Changes-All is {1131f6ad-9c07-11d1-f79f-00c04fc2dcd2} -- their presence here, requested by a non-DC account, is the DCSync signature."
+        }
+      ],
+      "normal_baseline": "On a healthy domain, 4662 events carrying the DS-Replication-Get-Changes/-All GUIDs should only originate from domain controller machine accounts and explicitly delegated replication accounts (e.g. Azure AD Connect's MSOL_ service account); this subcategory (Audit Directory Service Access) is not enabled by default and must be turned on along with a SACL on the domain naming context to generate these events at all.",
+      "sample_log": "An operation was performed on an object.\n\nSubject:\n\tSecurity ID:\t\tCORP\\DC01$\n\tAccount Name:\t\tDC01$\n\tAccount Domain:\t\tCORP\n\tLogon ID:\t\t0x3E7\n\nObject:\n\tObject Server:\t\tDS\n\tObject Type:\t\t%{19195a5b-6da0-11d0-afd3-00c04fd930c9}\n\tObject Name:\t\t%{DC=corp,DC=local}\n\tHandle ID:\t\t0x0\n\nOperation:\n\tOperation Type:\t\tObject Access\n\tAccesses:\t\tControl Access\n\tAccess Mask:\t\t0x100\n\tProperties:\t\tControl Access\n\t\t\t\t{1131f6aa-9c07-11d1-f79f-00c04fc2dcd2}\n\t\t\t\t{1131f6ad-9c07-11d1-f79f-00c04fc2dcd2}\n\nAdditional Information:\n\tParameter 1:\t\t-\n\tParameter 2:\t\t-",
+      "anomalies": [
+        "DS-Replication-Get-Changes {1131f6aa-9c07-11d1-f79f-00c04fc2dcd2} or DS-Replication-Get-Changes-All {1131f6ad-9c07-11d1-f79f-00c04fc2dcd2} appearing in Properties where the Subject Account Name does not end in $ (not a computer account) or is not a known, delegated replication service account",
+        "Replication-rights GUIDs requested from a source IP or host that is not a domain controller",
+        "A one-off Control Access operation against the domain root object (Object Name matching the domain DN) by an account with no legitimate replication responsibility"
+      ],
+      "attack_example": {
+        "scenario": "An attacker who has compromised an account holding (or granted itself) Replicating Directory Changes and Replicating Directory Changes All rights runs Mimikatz's lsadump::dcsync from a regular workstation, impersonating a domain controller to pull the krbtgt account's password hash without ever touching NTDS.dit directly.",
+        "log": "An operation was performed on an object.\n\nSubject:\n\tSecurity ID:\t\tCORP\\svc_backup\n\tAccount Name:\t\tsvc_backup\n\tAccount Domain:\t\tCORP\n\tLogon ID:\t\t0x9A11C40\n\nObject:\n\tObject Server:\t\tDS\n\tObject Type:\t\t%{19195a5b-6da0-11d0-afd3-00c04fd930c9}\n\tObject Name:\t\t%{DC=corp,DC=local}\n\tHandle ID:\t\t0x0\n\nOperation:\n\tOperation Type:\t\tObject Access\n\tAccesses:\t\tControl Access\n\tAccess Mask:\t\t0x100\n\tProperties:\t\tControl Access\n\t\t\t\t{1131f6aa-9c07-11d1-f79f-00c04fc2dcd2}\n\t\t\t\t{1131f6ad-9c07-11d1-f79f-00c04fc2dcd2}\n\nAdditional Information:\n\tParameter 1:\t\t-\n\tParameter 2:\t\t-"
+      },
+      "investigation_steps": [
+        "Filter 4662 for the two replication GUIDs and immediately check whether Subject Account Name ends in $ (legitimate DC) or matches a known, documented sync service account.",
+        "If the account is not a domain controller or delegated sync account, treat this as a confirmed or highly likely DCSync and begin credential-compromise response (assume krbtgt and other secrets are exposed).",
+        "Correlate the Logon ID back to its 4624 to identify the originating host/IP the replication request actually came from.",
+        "Check whether the account recently had replication rights (Replicating Directory Changes / Replicating Directory Changes All) granted via a 4662 write to the domain object's DACL, or via a 4670 permissions change, which would indicate the attacker first escalated rights before running DCSync."
+      ],
+      "false_positives": [
+        "Domain controller machine accounts performing normal inter-DC replication",
+        "Delegated, documented replication consumers such as Azure AD Connect (MSOL_ service account) or approved backup/DR tooling with legitimate replication rights"
+      ],
+      "attack_techniques": [
+        {
+          "id": "T1003.006",
+          "name": "OS Credential Dumping: DCSync"
+        }
+      ],
+      "detection_query": "SecurityEvent\n| where EventID == 4662\n| where Properties has_any (\"1131f6aa-9c07-11d1-f79f-00c04fc2dcd2\", \"1131f6ad-9c07-11d1-f79f-00c04fc2dcd2\")\n| where SubjectUserName !endswith \"$\" and SubjectUserName !in (KnownReplicationAccounts)",
+      "related_attacks": [
+        "DCSync / Mimikatz lsadump::dcsync",
+        "Golden Ticket creation (DCSync is the usual way an attacker first obtains the krbtgt hash)",
+        "Privilege escalation via granting a controlled account Replicating Directory Changes rights"
+      ],
+      "artifektx_links": [],
+      "related_ids": [
+        "4656",
+        "4663",
+        "4660",
+        "4670",
+        "4624",
+        "4661"
+      ]
+    },
+    {
+      "id": "4704",
+      "name": "A user right was assigned",
+      "log_source": "Security",
+      "category": "Policy & Audit",
+      "priority": "High",
+      "description": "Logged when a user right (privilege), such as SeDebugPrivilege or SeTcbPrivilege, is assigned to a user or group on a computer. Because most user rights are pushed through Group Policy, the Subject is almost always the local SYSTEM account, so the real 'who' behind the change has to be traced back to the Group Policy Object rather than this event alone.",
+      "key_fields": [
+        {
+          "field": "Subject > Account Name",
+          "meaning": "The account that assigned the right; typically SYSTEM because rights are usually applied via Group Policy processing rather than direct interactive action."
+        },
+        {
+          "field": "Target Account",
+          "meaning": "The name of the user or group receiving the right assignment."
+        },
+        {
+          "field": "New Right",
+          "meaning": "The specific privilege name that was assigned, e.g. SeDebugPrivilege, SeBackupPrivilege, SeTcbPrivilege."
+        }
+      ],
+      "normal_baseline": "Expected in bulk at GPO processing intervals and after documented security-baseline changes; the account list receiving sensitive rights should match a small, known set of administrative or service accounts.",
+      "sample_log": "A user right was assigned.\n\nSubject:\n\tSecurity ID:\t\tS-1-5-18\n\tAccount Name:\t\tDC01$\n\tAccount Domain:\t\tCORP\n\tLogon ID:\t\t0x3E7\n\nTarget Account:\n\tSecurity ID:\t\tCORP\\svc_backup\n\tAccount Name:\t\tsvc_backup\n\tAccount Domain:\t\tCORP\n\nProcess Information:\n\tProcess ID:\t\t0x268\n\tProcess Name:\t\tC:\\Windows\\System32\\lsass.exe\n\nNew Right:\t\tSeBackupPrivilege",
+      "anomalies": [
+        "SeDebugPrivilege, SeTcbPrivilege, SeImpersonatePrivilege, or SeLoadDriverPrivilege granted to an account outside the documented admin/service-account set",
+        "A 4704 with no corresponding Group Policy change record, suggesting the right was set locally (e.g. via ntrights.exe or secedit) rather than through managed policy",
+        "A 4704 immediately followed by suspicious use of the newly granted privilege, such as SeDebugPrivilege followed by LSASS memory access"
+      ],
+      "attack_example": {
+        "scenario": "An attacker with temporary administrative access uses secedit to directly grant a low-privilege service account SeDebugPrivilege and SeImpersonatePrivilege outside of any Group Policy change window, intending to use the account later for credential dumping without needing to compromise a full admin account again.",
+        "log": "A user right was assigned.\n\nSubject:\n\tSecurity ID:\t\tCORP\\jdoe.admin\n\tAccount Name:\t\tjdoe.admin\n\tAccount Domain:\t\tCORP\n\tLogon ID:\t\t0x4B7C102\n\nTarget Account:\n\tSecurity ID:\t\tCORP\\svc_helper02\n\tAccount Name:\t\tsvc_helper02\n\tAccount Domain:\t\tCORP\n\nProcess Information:\n\tProcess ID:\t\t0x1a4c\n\tProcess Name:\t\tC:\\Windows\\System32\\lsass.exe\n\nNew Right:\t\tSeDebugPrivilege"
+      },
+      "investigation_steps": [
+        "Check whether Subject Account Name is SYSTEM (expected, GPO-driven) or a live administrator account (unusual, direct local policy change).",
+        "If SYSTEM, cross-reference domain controller logs for a matching groupPolicyContainer modification around the same time to identify who actually changed the GPO.",
+        "Confirm the Target Account and New Right combination against the organization's documented privileged-access baseline.",
+        "Watch for subsequent use of the granted privilege by the Target Account, especially SeDebugPrivilege followed by process access to lsass.exe."
+      ],
+      "false_positives": [
+        "Routine Group Policy refresh cycles reapplying an already-documented User Rights Assignment baseline",
+        "Legitimate backup, monitoring, or virtualization software installers that request and are granted specific privileges as part of setup"
+      ],
+      "attack_techniques": [
+        {
+          "id": "T1098",
+          "name": "Account Manipulation"
+        }
+      ],
+      "detection_query": "SecurityEvent\n| where EventID == 4704\n| where NewRight has_any (\"SeDebugPrivilege\", \"SeTcbPrivilege\", \"SeImpersonatePrivilege\", \"SeLoadDriverPrivilege\")\n| where TargetUserName !in (KnownPrivilegedAccounts)",
+      "related_attacks": [
+        "Privilege escalation via direct local security policy modification",
+        "Pre-staging an account with SeDebugPrivilege/SeImpersonatePrivilege for later credential-dumping or token-impersonation abuse"
+      ],
+      "artifektx_links": [],
+      "related_ids": [
+        "4703",
+        "4672",
+        "4713",
+        "4624"
+      ]
+    },
+    {
+      "id": "4705",
+      "name": "A user right was removed",
+      "log_source": "Security",
+      "category": "Policy & Audit",
+      "priority": "Medium",
+      "description": "Logged when a previously assigned user right is revoked from a user or group. Like its counterpart 4704, this is normally a Group Policy side effect (Subject is SYSTEM), so unexpected direct removals -- especially of monitoring or audit-related privileges from a security tool's service account -- are the main thing worth chasing.",
+      "key_fields": [
+        {
+          "field": "Subject > Account Name",
+          "meaning": "The account that revoked the right; typically SYSTEM when driven by Group Policy."
+        },
+        {
+          "field": "Target Account",
+          "meaning": "The user or group that lost the right."
+        },
+        {
+          "field": "Removed Right",
+          "meaning": "The specific privilege that was revoked, e.g. SeSecurityPrivilege or SeAuditPrivilege."
+        }
+      ],
+      "normal_baseline": "Expected in bulk alongside 4704 during Group Policy reprocessing when a security baseline is tightened; should track a documented change window, not appear in isolation on a single host.",
+      "sample_log": "A user right was removed.\n\nSubject:\n\tSecurity ID:\t\tS-1-5-18\n\tAccount Name:\t\tWKS-042$\n\tAccount Domain:\t\tCORP\n\tLogon ID:\t\t0x3E7\n\nTarget Account:\n\tSecurity ID:\t\tCORP\\svc_monitor\n\tAccount Name:\t\tsvc_monitor\n\tAccount Domain:\t\tCORP\n\nProcess Information:\n\tProcess ID:\t\t0x268\n\tProcess Name:\t\tC:\\Windows\\System32\\lsass.exe\n\nRemoved Right:\t\tSeAuditPrivilege",
+      "anomalies": [
+        "SeSecurityPrivilege or SeAuditPrivilege removed from a SIEM agent or logging service account, which can be a precursor to blinding security monitoring",
+        "A 4705 on a single host with no matching organization-wide Group Policy change",
+        "Removal immediately followed by a gap or drop in expected security event volume from that host"
+      ],
+      "attack_example": {
+        "scenario": "An attacker with local admin rights strips SeAuditPrivilege and SeSecurityPrivilege from the account running the endpoint's log-forwarding agent, quietly degrading its ability to view or manage the security log before proceeding with further activity on the host.",
+        "log": "A user right was removed.\n\nSubject:\n\tSecurity ID:\t\tCORP\\helpdesk_t2\n\tAccount Name:\t\thelpdesk_t2\n\tAccount Domain:\t\tCORP\n\tLogon ID:\t\t0x9A11D02\n\nTarget Account:\n\tSecurity ID:\t\tCORP\\svc_monitor\n\tAccount Name:\t\tsvc_monitor\n\tAccount Domain:\t\tCORP\n\nProcess Information:\n\tProcess ID:\t\t0x268\n\tProcess Name:\t\tC:\\Windows\\System32\\lsass.exe\n\nRemoved Right:\t\tSeSecurityPrivilege"
+      },
+      "investigation_steps": [
+        "Check whether Subject Account Name is SYSTEM (GPO-driven) versus a live account (direct local change).",
+        "If SYSTEM, correlate with domain controller groupPolicyContainer changes to identify the actual administrator behind the policy edit.",
+        "Confirm the Target Account still functions as expected; a monitoring or logging service account losing SeAuditPrivilege/SeSecurityPrivilege warrants immediate verification of continued log visibility.",
+        "Check for a paired 4704 shortly before or after on the same account, which could indicate a privilege swap rather than a straightforward removal."
+      ],
+      "false_positives": [
+        "Routine security-baseline hardening that intentionally removes overly broad rights from accounts",
+        "Group Policy reprocessing that reapplies a tightened User Rights Assignment template"
+      ],
+      "attack_techniques": [
+        {
+          "id": "T1098",
+          "name": "Account Manipulation"
+        }
+      ],
+      "detection_query": "SecurityEvent\n| where EventID == 4705\n| where RemovedRight has_any (\"SeAuditPrivilege\", \"SeSecurityPrivilege\")\n| where TargetUserName has_any (LoggingServiceAccounts)",
+      "related_attacks": [
+        "Defense evasion via stripping audit/security privileges from monitoring or logging service accounts",
+        "Privilege demotion used to mask a subsequent, unrelated privilege escalation elsewhere"
+      ],
+      "artifektx_links": [],
+      "related_ids": [
+        "4703",
+        "4704",
+        "4713",
+        "4624"
+      ]
+    },
+    {
+      "id": "4706",
+      "name": "A new trust was created to a domain",
+      "log_source": "Security",
+      "category": "Policy & Audit",
+      "priority": "High",
+      "description": "Logged when a new inter-domain or inter-forest trust relationship is established, capturing the trust's type, direction, and transitivity. Because a trust extends authentication and, depending on SID filtering, SID-based authorization across a domain boundary, an unexpected new trust is one of the more serious domain-level persistence and lateral-movement indicators.",
+      "key_fields": [
+        {
+          "field": "Subject > Account Name",
+          "meaning": "The account that created the trust, expected to be a domain or enterprise admin."
+        },
+        {
+          "field": "Trusted Domain Information > Domain Name / Domain ID",
+          "meaning": "The DNS name and NetBIOS/SID identifier of the newly trusted domain."
+        },
+        {
+          "field": "Trust Type",
+          "meaning": "1 = downlevel (NTLM-only, pre-Windows 2000), 2 = uplevel (Kerberos-supported), 3 = MIT Kerberos realm, 4 = DCE realm."
+        },
+        {
+          "field": "Trust Direction",
+          "meaning": "0x0 = disabled, 0x1 = inbound, 0x2 = outbound, 0x3 = bidirectional."
+        },
+        {
+          "field": "Trust Attributes",
+          "meaning": "Flags controlling transitivity and other trust behavior, e.g. whether the trust is transitive across the forest."
+        },
+        {
+          "field": "SID Filtering",
+          "meaning": "Whether SID filtering (SID Filter Quarantining) is enabled on the trust, a key mitigation against cross-domain SID History abuse."
+        }
+      ],
+      "normal_baseline": "Extremely rare in most environments; new trusts should map one-to-one to a documented merger, acquisition, migration project, or planned cross-forest resource-access initiative.",
+      "sample_log": "A new trust was created to a domain.\n\nSubject:\n\tSecurity ID:\t\tCORP\\ea_admin\n\tAccount Name:\t\tea_admin\n\tAccount Domain:\t\tCORP\n\tLogon ID:\t\t0x2a410\n\nTrusted Domain Information:\n\tDomain Name:\t\tpartner.local\n\tDomain ID:\t\tS-1-5-21-998877665-443322110-1122334455\n\nTrust Type:\t\t2\nTrust Direction:\t0x3\nTrust Attributes:\t32\nSID Filtering:\t\tEnabled",
+      "anomalies": [
+        "A new trust created outside any documented merger, migration, or partner-access project",
+        "Trust Direction bidirectional (0x3) or SID Filtering disabled where a one-way, filtered trust would have sufficed for the stated business purpose",
+        "A trust created by an account outside the small set of enterprise/domain admins expected to perform this action"
+      ],
+      "attack_example": {
+        "scenario": "An attacker who has compromised Enterprise Admin credentials establishes a bidirectional, SID-filtering-disabled forest trust to an attacker-controlled domain, then uses SID History injection across that trust to grant a foreign account Domain Admin-equivalent access, all without touching the victim domain's own privileged groups directly.",
+        "log": "A new trust was created to a domain.\n\nSubject:\n\tSecurity ID:\t\tCORP\\svc_backup\n\tAccount Name:\t\tsvc_backup\n\tAccount Domain:\t\tCORP\n\tLogon ID:\t\t0x9A11C40\n\nTrusted Domain Information:\n\tDomain Name:\t\tshadow-corp.evil\n\tDomain ID:\t\tS-1-5-21-111222333-444555666-777888999\n\nTrust Type:\t\t2\nTrust Direction:\t0x3\nTrust Attributes:\t32\nSID Filtering:\t\tDisabled"
+      },
+      "investigation_steps": [
+        "Confirm the trust against a documented change request; there should be a business reason (merger, migration, partner access) on file for every new trust.",
+        "Check Trust Direction and SID Filtering together; a bidirectional trust with SID Filtering disabled is far riskier than a one-way, filtered trust and should be challenged even if the trust itself is legitimate.",
+        "Verify the Subject account is one of the organization's designated Enterprise Admins and that the action correlates with a known change window.",
+        "If the trust is unauthorized, immediately review for related 4765/4766 (SID History) activity that could have exploited it before it is removed."
+      ],
+      "false_positives": [
+        "Planned domain migrations, forest consolidations, or Active Directory Migration Tool (ADMT) projects that legitimately require a temporary or permanent trust",
+        "Approved partner or subsidiary trusts documented as part of a business integration"
+      ],
+      "attack_techniques": [
+        {
+          "id": "T1484.002",
+          "name": "Domain or Tenant Policy Modification: Trust Modification"
+        }
+      ],
+      "detection_query": "SecurityEvent\n| where EventID == 4706\n| project TimeGenerated, SubjectUserName, TargetDomainName = DomainName, TrustDirection, TrustType, TrustAttributes, SidFiltering",
+      "related_attacks": [
+        "Golden/forged ticket abuse across a forest trust to compromise a child or partner domain",
+        "SID History injection across a newly created, unfiltered trust for cross-domain privilege escalation"
+      ],
+      "artifektx_links": [],
+      "related_ids": [
+        "4713",
+        "4765",
+        "4766"
+      ]
+    },
+    {
+      "id": "4735",
+      "name": "A security-enabled local group was changed",
+      "log_source": "Security",
+      "category": "Account Management",
+      "priority": "Medium",
+      "description": "Logged when a security-enabled group's own attributes -- not its membership -- are changed, most usefully its SAM Account Name (rename) or SID History. It fires on domain controllers for AD domain local groups and on member computers for local SAM groups; membership additions/removals are separate events (4732/4728/etc.).",
+      "key_fields": [
+        {
+          "field": "Subject > Account Name",
+          "meaning": "The account that made the change."
+        },
+        {
+          "field": "Group > Group Name / Group Domain",
+          "meaning": "The group that was changed and its domain or computer scope."
+        },
+        {
+          "field": "Changed Attributes > SAM Account Name",
+          "meaning": "The group's new pre-Windows 2000 logon name, populated only if the name was actually changed."
+        },
+        {
+          "field": "Changed Attributes > SID History",
+          "meaning": "Previous SIDs carried over if the group object was migrated from another domain; always '-' for local groups."
+        }
+      ],
+      "normal_baseline": "Infrequent; expected only around documented group renames or domain-migration SID History population, since most 4735 events show all Changed Attributes as '-' when the change was to an untracked attribute like Description.",
+      "sample_log": "A security-enabled local group was changed.\n\nSubject:\n\tSecurity ID:\t\tCORP\\jdoe.admin\n\tAccount Name:\t\tjdoe.admin\n\tAccount Domain:\t\tCORP\n\tLogon ID:\t\t0x4B7C102\n\nGroup:\n\tSecurity ID:\t\tCORP\\ServiceDesk\n\tGroup Name:\t\tServiceDesk\n\tGroup Domain:\t\tCORP\n\nChanged Attributes:\n\tSAM Account Name:\tServiceDesk_NEW\n\tSID History:\t\t-\n\nAdditional Information:\n\tPrivileges:\t\t-",
+      "anomalies": [
+        "SID History populated on a group outside a documented cross-domain migration project",
+        "A rename of a sensitive group (e.g. one used in delegation ACLs or GPO filtering) that could be intended to break detection rules keyed on the old name",
+        "The change performed by an account with no history of group-administration activity"
+      ],
+      "attack_example": {
+        "scenario": "During a claimed 'domain consolidation,' an attacker with temporary elevated rights populates SID History on an internal group they control with the SID of a highly privileged built-in group from a trusted domain, quietly extending that group's effective access without ever adding a new member.",
+        "log": "A security-enabled local group was changed.\n\nSubject:\n\tSecurity ID:\t\tCORP\\svc_backup\n\tAccount Name:\t\tsvc_backup\n\tAccount Domain:\t\tCORP\n\tLogon ID:\t\t0x9A11C40\n\nGroup:\n\tSecurity ID:\t\tCORP\\AppSupportTeam\n\tGroup Name:\t\tAppSupportTeam\n\tGroup Domain:\t\tCORP\n\nChanged Attributes:\n\tSAM Account Name:\t-\n\tSID History:\t\tS-1-5-21-1122334455-2233445566-3344556677-519\n\nAdditional Information:\n\tPrivileges:\t\t-"
+      },
+      "investigation_steps": [
+        "Check whether SID History is populated; outside a known migration, this alone warrants escalation.",
+        "If SAM Account Name changed, confirm the rename against a documented change and check whether any detection rules or ACLs reference the group by its old name.",
+        "Cross-reference the Subject account against the organization's designated group administrators.",
+        "Pull recent 4732/4728 events for the same group to see whether a membership change accompanied the attribute change."
+      ],
+      "false_positives": [
+        "Planned group renames as part of naming-convention cleanup",
+        "SID History population during a legitimate, documented domain migration or consolidation project"
+      ],
+      "attack_techniques": [
+        {
+          "id": "T1098.007",
+          "name": "Account Manipulation: Additional Local or Domain Groups"
+        }
+      ],
+      "detection_query": "SecurityEvent\n| where EventID == 4735\n| where SidHistory != \"-\" and isnotempty(SidHistory)",
+      "related_attacks": [
+        "SID History injection into a group object to extend privileged access without a visible membership change",
+        "Sensitive-group renaming to evade name-based detection rules"
+      ],
+      "artifektx_links": [],
+      "related_ids": [
+        "4732",
+        "4728",
+        "4765",
+        "4766"
+      ]
+    },
+    {
+      "id": "4741",
+      "name": "A computer account was created",
+      "log_source": "Security",
+      "category": "Account Management",
+      "priority": "Medium",
+      "description": "Logged when a new computer object is created in Active Directory. Because any authenticated domain user can normally create up to ten computer accounts by default (the ms-DS-MachineAccountQuota attribute), this event is a key early-warning signal for attacks that need an attacker-controlled machine account, most notably as the first step toward Resource-Based Constrained Delegation abuse.",
+      "key_fields": [
+        {
+          "field": "Subject > Account Name",
+          "meaning": "The account that created the computer object; under default MachineAccountQuota settings this can be any authenticated domain user, not just an admin."
+        },
+        {
+          "field": "New Computer Account > Account Name",
+          "meaning": "The new computer account's SAM name, always ending in $."
+        },
+        {
+          "field": "Attributes > Primary Group ID",
+          "meaning": "Expected to be 515 (Domain Computers) for a normal workstation/server; 516 or 521 would indicate a new domain controller or RODC."
+        },
+        {
+          "field": "Attributes > Password Last Set",
+          "meaning": "'<never>' for a manually pre-staged computer object versus a timestamp for one created via a standard domain-join."
+        },
+        {
+          "field": "Attributes > New UAC Value / User Account Control",
+          "meaning": "Account control flags; 'Workstation Trust Account' is expected, while flags like 'Password Not Required' are worth scrutiny."
+        }
+      ],
+      "normal_baseline": "Expected in volume tied to IT-managed device provisioning and domain-join workflows; creation by non-IT accounts is unusual unless the organization intentionally allows self-service domain join.",
+      "sample_log": "A computer account was created.\n\nSubject:\n\tSecurity ID:\t\tCORP\\jdoe.admin\n\tAccount Name:\t\tjdoe.admin\n\tAccount Domain:\t\tCORP\n\tLogon ID:\t\t0x4B7C102\n\nNew Computer Account:\n\tSecurity ID:\t\tCORP\\WKS-108$\n\tAccount Name:\t\tWKS-108$\n\tAccount Domain:\t\tCORP\n\nAttributes:\n\tSAM Account Name:\tWKS-108$\n\tPrimary Group ID:\t515\n\tPassword Last Set:\t2026-09-10T09:15:00.000Z\n\tUser Account Control:\tWorkstation Trust Account\n\tAllowed To Delegate To:\t-",
+      "anomalies": [
+        "A computer account created by a regular (non-IT, non-admin) domain user, made possible by the default ms-DS-MachineAccountQuota of 10",
+        "Password Last Set showing '<never>', indicating a manually pre-staged object rather than one created through a real domain-join",
+        "A new computer account followed within minutes by a 4742 setting msDS-AllowedToActOnBehalfOfOtherIdentity, the RBCD attack chain"
+      ],
+      "attack_example": {
+        "scenario": "An attacker with only standard domain-user rights leverages the default machine account quota to create a fake computer account under their control. They will use it moments later as the delegation source in a Resource-Based Constrained Delegation attack against a high-value server.",
+        "log": "A computer account was created.\n\nSubject:\n\tSecurity ID:\t\tCORP\\jsmith\n\tAccount Name:\t\tjsmith\n\tAccount Domain:\t\tCORP\n\tLogon ID:\t\t0x8A22F10\n\nNew Computer Account:\n\tSecurity ID:\t\tCORP\\FAKE01$\n\tAccount Name:\t\tFAKE01$\n\tAccount Domain:\t\tCORP\n\nAttributes:\n\tSAM Account Name:\tFAKE01$\n\tPrimary Group ID:\t515\n\tPassword Last Set:\t2026-09-11T22:04:00.000Z\n\tUser Account Control:\tWorkstation Trust Account\n\tAllowed To Delegate To:\t-"
+      },
+      "investigation_steps": [
+        "Confirm the Subject account is IT staff, a device-provisioning service account, or otherwise authorized to join computers to the domain.",
+        "Check Primary Group ID (should be 515 for normal member computers) and Password Last Set (a manual '<never>' value on a supposedly auto-joined machine is worth a closer look).",
+        "Watch for an immediate follow-on 4742 against the same account setting AllowedToDelegateTo or msDS-AllowedToActOnBehalfOfOtherIdentity, which would confirm RBCD staging.",
+        "If MachineAccountQuota abuse is suspected, review the domain's ms-DS-MachineAccountQuota value and consider whether it should be reduced from its default of 10."
+      ],
+      "false_positives": [
+        "Standard device provisioning and domain-join workflows run by IT or an MDM/imaging solution",
+        "Environments that intentionally allow self-service domain join for end-user or BYOD devices"
+      ],
+      "attack_techniques": [
+        {
+          "id": "T1136.002",
+          "name": "Create Account: Domain Account"
+        }
+      ],
+      "detection_query": "SecurityEvent\n| where EventID == 4741\n| where SubjectUserName !in (KnownProvisioningAccounts)",
+      "related_attacks": [
+        "Resource-Based Constrained Delegation (RBCD) abuse via ms-DS-MachineAccountQuota",
+        "Backdoor computer-account creation for persistence or lateral movement staging"
+      ],
+      "artifektx_links": [],
+      "related_ids": [
+        "4720",
+        "4738",
+        "4742"
+      ]
+    },
+    {
+      "id": "4742",
+      "name": "A computer account was changed",
+      "log_source": "Security",
+      "category": "Account Management",
+      "priority": "Critical",
+      "description": "Logged whenever an existing computer object's attributes are modified on a domain controller. Its most security-critical use is detecting Resource-Based Constrained Delegation (RBCD) abuse: when the Changed Attributes show msDS-AllowedToActOnBehalfOfOtherIdentity being set, especially to reference a recently created or attacker-controlled computer account, it means someone has just configured that target computer to accept delegated authentication from the named account -- letting the attacker impersonate any user, including Domain Admins, against it.",
+      "key_fields": [
+        {
+          "field": "Subject > Account Name",
+          "meaning": "The account that changed the computer object; RBCD only requires write access (e.g. GenericAll/GenericWrite/WriteProperty) to the target object, not Domain Admin rights."
+        },
+        {
+          "field": "Computer Account That Was Changed > Account Name",
+          "meaning": "The computer object being modified, i.e. the RBCD delegation target."
+        },
+        {
+          "field": "Changed Attributes > AllowedToDelegateTo",
+          "meaning": "The list of SPNs this account can present delegated credentials to (classic constrained delegation); shows the new list, not a diff."
+        },
+        {
+          "field": "Changed Attributes > Old UAC Value / New UAC Value",
+          "meaning": "SAM account-flag bitmask before and after; watch for 'Trusted For Delegation' or 'Trusted To Authenticate For Delegation' flipping on."
+        },
+        {
+          "field": "Changed Attributes > SID History",
+          "meaning": "Previous SIDs if the object was migrated; should remain '-' for a normal computer account."
+        }
+      ],
+      "normal_baseline": "Routine on domain controllers from automatic password rotation (roughly every 30 days by default) and DNS Host Name/SPN updates after a rename or reboot; changes to delegation-related fields (AllowedToDelegateTo, the UAC delegation flags, or msDS-AllowedToActOnBehalfOfOtherIdentity) should be rare and tied to a documented delegation design.",
+      "sample_log": "A computer account was changed.\n\nSubject:\n\tSecurity ID:\t\tCORP\\jdoe.admin\n\tAccount Name:\t\tjdoe.admin\n\tAccount Domain:\t\tCORP\n\tLogon ID:\t\t0x4B7C102\n\nComputer Account That Was Changed:\n\tSecurity ID:\t\tCORP\\SQLPROD03$\n\tAccount Name:\t\tSQLPROD03$\n\tAccount Domain:\t\tCORP\n\nChanged Attributes:\n\tSAM Account Name:\t-\n\tAllowedToDelegateTo:\t-\n\tOld UAC Value:\t\t0x1020\n\tNew UAC Value:\t\t0x1020\n\tSID History:\t\t-\n\nAdditional Information:\n\tPrivileges:\t\t-",
+      "anomalies": [
+        "Changed Attributes shows a new value for msDS-AllowedToActOnBehalfOfOtherIdentity (surfaced in raw XML/forwarded logs even where the human-readable field isn't rendered), especially referencing a recently created (4741) or unfamiliar computer account",
+        "AllowedToDelegateTo populated on an account for which delegation was previously '<value not set>', particularly to a high-value SPN",
+        "'Trusted For Delegation' or 'Trusted To Authenticate For Delegation' flipping to Enabled on a server that has no documented delegation requirement",
+        "The Subject account performing the change has only narrow, help-desk-style AD delegation, not full domain admin rights, over the target object"
+      ],
+      "attack_example": {
+        "scenario": "Having compromised a help-desk account with GenericWrite over a single server's computer object, an attacker sets msDS-AllowedToActOnBehalfOfOtherIdentity on that server to reference a computer account they control, then uses Rubeus/Impacket to request a service ticket as a Domain Admin against that server -- full domain compromise from one over-permissioned ACL, with no delegation rights or admin membership ever touched.",
+        "log": "A computer account was changed.\n\nSubject:\n\tSecurity ID:\t\tCORP\\helpdesk_t2\n\tAccount Name:\t\thelpdesk_t2\n\tAccount Domain:\t\tCORP\n\tLogon ID:\t\t0x9A11D02\n\nComputer Account That Was Changed:\n\tSecurity ID:\t\tCORP\\SQLPROD03$\n\tAccount Name:\t\tSQLPROD03$\n\tAccount Domain:\t\tCORP\n\nChanged Attributes:\n\tSAM Account Name:\t-\n\tAllowedToDelegateTo:\t-\n\tOld UAC Value:\t\t0x1020\n\tNew UAC Value:\t\t0x1020\n\tSID History:\t\t-\n\n[msDS-AllowedToActOnBehalfOfOtherIdentity set to FAKE01$, created via 4741 three minutes earlier]"
+      },
+      "investigation_steps": [
+        "If forwarded/raw event data is available, check specifically for msDS-AllowedToActOnBehalfOfOtherIdentity changes; the human-readable Event Viewer rendering does not always surface this field explicitly.",
+        "Identify what account is now allowed to delegate on behalf of others to this computer, and check whether that account was itself very recently created (correlate with 4741).",
+        "Confirm the Subject account's actual permissions on the target object; RBCD only needs write access to one attribute, not domain admin rights, so a low-privilege help-desk account performing this change is itself suspicious.",
+        "Check AllowedToDelegateTo and the delegation-related UAC flags for any unexplained changes on high-value servers (domain controllers, database servers, admin workstations).",
+        "If RBCD abuse is confirmed, immediately clear msDS-AllowedToActOnBehalfOfOtherIdentity on the affected computer object and audit who holds write access to it."
+      ],
+      "false_positives": [
+        "Automatic computer-account password rotation, which changes Password Last Set without touching delegation fields",
+        "Legitimate, documented Kerberos constrained or resource-based delegation configuration performed by AD administrators as part of an application deployment"
+      ],
+      "attack_techniques": [
+        {
+          "id": "T1098",
+          "name": "Account Manipulation"
+        }
+      ],
+      "detection_query": "SecurityEvent\n| where EventID == 4742\n| where isnotempty(AllowedToDelegateTo) and AllowedToDelegateTo != \"-\"\n   or NewUacValue != OldUacValue",
+      "related_attacks": [
+        "Resource-Based Constrained Delegation (RBCD) abuse via msDS-AllowedToActOnBehalfOfOtherIdentity",
+        "Classic (unconstrained/constrained) delegation abuse via AllowedToDelegateTo or the 'Trusted For Delegation' UAC flag"
+      ],
+      "artifektx_links": [],
+      "related_ids": [
+        "4738",
+        "4741",
+        "4720",
+        "4670"
+      ]
+    },
+    {
+      "id": "4765",
+      "name": "SID History was added to an account",
+      "log_source": "Security",
+      "category": "Account Management",
+      "priority": "Critical",
+      "description": "Logged when one or more SIDs are added to an account's SID History attribute, normally reserved for preserving resource access when an account is migrated between domains. Because any SID placed in SID History is honored during authorization exactly like a native group membership, an attacker who can write this attribute can grant an otherwise unprivileged account instant Domain Admin- or Enterprise Admin-equivalent access without ever touching a privileged group.",
+      "key_fields": [
+        {
+          "field": "Subject > Account Name",
+          "meaning": "The account that performed the SID History addition."
+        },
+        {
+          "field": "Target Account > Account Name",
+          "meaning": "The account receiving the new SID History entry -- the account being granted extra access."
+        },
+        {
+          "field": "Source Account > Account Name",
+          "meaning": "The account whose SID is being added to history, i.e. the identity/privilege being effectively cloned onto the Target Account."
+        },
+        {
+          "field": "Additional Information > SID List",
+          "meaning": "The specific SID(s) added; a privileged well-known RID (e.g. ...-512 Domain Admins, ...-519 Enterprise Admins) here is the critical detail."
+        }
+      ],
+      "normal_baseline": "Very rare outside an active, documented inter-domain account migration (e.g. via ADMT); most organizations should see close to zero of these events in normal operation.",
+      "sample_log": "SID History was added to an account.\n\nSubject:\n\tSecurity ID:\t\tCORP\\migration_svc\n\tAccount Name:\t\tmigration_svc\n\tAccount Domain:\t\tCORP\n\tLogon ID:\t\t0x2a410\n\nTarget Account:\n\tSecurity ID:\t\tCORP\\m.reyes\n\tAccount Name:\t\tm.reyes\n\tAccount Domain:\t\tCORP\n\nSource Account:\n\tAccount Name:\t\tm.reyes@legacy.local\n\nAdditional Information:\n\tPrivileges:\t\tSeEnableDelegationPrivilege\n\tSID List:\t\tS-1-5-21-998877665-443322110-1122334455-1104",
+      "anomalies": [
+        "A SID List entry matching a privileged well-known RID such as -512 (Domain Admins), -519 (Enterprise Admins), or -518 (Schema Admins) from any domain, especially the current or a trusted forest",
+        "SID History added outside any active, documented ADMT or domain-migration project",
+        "The Subject account is not the dedicated migration service account normally used for this operation"
+      ],
+      "attack_example": {
+        "scenario": "An attacker who has already compromised an account with Domain Admin-equivalent rights uses Mimikatz's sid::patch and sid::add to inject the Enterprise Admins SID from the forest root into an innocuous-looking standard user account, granting that account forest-wide administrative access that a naive review of group memberships would never surface.",
+        "log": "SID History was added to an account.\n\nSubject:\n\tSecurity ID:\t\tCORP\\svc_backup\n\tAccount Name:\t\tsvc_backup\n\tAccount Domain:\t\tCORP\n\tLogon ID:\t\t0x9A11C40\n\nTarget Account:\n\tSecurity ID:\t\tCORP\\svc_helper02\n\tAccount Name:\t\tsvc_helper02\n\tAccount Domain:\t\tCORP\n\nSource Account:\n\tAccount Name:\t\t-\n\nAdditional Information:\n\tPrivileges:\t\tSeEnableDelegationPrivilege\n\tSID List:\t\tS-1-5-21-3623811015-3361044348-30300820-519"
+      },
+      "investigation_steps": [
+        "Decode every SID in the SID List; a well-known privileged RID suffix (-512, -518, -519) is a domain-compromise-level finding regardless of context.",
+        "Verify there is an active, approved migration project (and matching Source Account activity) that would legitimately explain the addition.",
+        "Identify what rights the Subject account used to perform this action (SeEnableDelegationPrivilege / domain-admin-equivalent rights are required), and treat the Subject's own session as compromised if the addition is unauthorized.",
+        "If confirmed malicious, remove the injected SID History immediately and treat the Target Account as fully compromised going forward, since it now carries effective privileged-group membership."
+      ],
+      "false_positives": [
+        "Active Directory Migration Tool (ADMT)-driven account migrations that intentionally preserve legacy-domain resource access via SID History",
+        "Cross-forest identity consolidation projects with a documented, time-boxed change window"
+      ],
+      "attack_techniques": [
+        {
+          "id": "T1134.005",
+          "name": "Access Token Manipulation: SID-History Injection"
+        }
+      ],
+      "detection_query": "SecurityEvent\n| where EventID == 4765\n| where SidHistory has_any (\"-512\", \"-518\", \"-519\", \"-544\")",
+      "related_attacks": [
+        "SID History injection for privilege escalation and stealthy persistence",
+        "Golden Ticket forged with an Enterprise Admins SID History entry to compromise a parent domain from a child domain"
+      ],
+      "artifektx_links": [],
+      "related_ids": [
+        "4766",
+        "4706",
+        "4735",
+        "4728",
+        "4672"
+      ]
+    },
+    {
+      "id": "4766",
+      "name": "An attempt to add SID History to an account failed",
+      "log_source": "Security",
+      "category": "Account Management",
+      "priority": "High",
+      "description": "The failure counterpart to 4765, logged when an attempt to write to an account's SID History attribute does not succeed. A cluster of these failures is a strong signal that someone is actively probing for the ability to perform SID History injection, even though they haven't yet succeeded, and often precedes a successful 4765 once the attacker obtains sufficient rights.",
+      "key_fields": [
+        {
+          "field": "Subject > Account Name",
+          "meaning": "The account that attempted the SID History addition."
+        },
+        {
+          "field": "Target Account > Account Name",
+          "meaning": "The account the SID History addition was attempted against."
+        },
+        {
+          "field": "Source Account > Account Name",
+          "meaning": "The account whose SID the attempt tried to add to history."
+        },
+        {
+          "field": "Additional Information > Privileges",
+          "meaning": "The privileges held (or attempted to be used) during the failed operation, useful for confirming whether the attempt failed due to insufficient rights."
+        }
+      ],
+      "normal_baseline": "Should essentially never occur; even during a legitimate migration, the dedicated migration tooling and service account should not generate failures once properly configured.",
+      "sample_log": "An attempt to add SID History to an account failed.\n\nSubject:\n\tSecurity ID:\t\tCORP\\svc_helper02\n\tAccount Name:\t\tsvc_helper02\n\tAccount Domain:\t\tCORP\n\tLogon ID:\t\t0x9A11D02\n\nTarget Account:\n\tSecurity ID:\t\tCORP\\svc_helper02\n\tAccount Name:\t\tsvc_helper02\n\tAccount Domain:\t\tCORP\n\nSource Account:\n\tAccount Name:\t\t-\n\nAdditional Information:\n\tPrivileges:\t\t-",
+      "anomalies": [
+        "Any 4766 occurring outside an active migration project",
+        "Repeated 4766 failures against the same Target Account, suggesting an attacker retrying after privilege escalation attempts",
+        "A 4766 immediately followed by a successful 4765 once the Subject account gains additional rights"
+      ],
+      "attack_example": {
+        "scenario": "An attacker with only local admin rights on a member server first attempts to inject a Domain Admins SID into a controlled account using Mimikatz, but fails because the operation requires domain-level SeEnableDelegationPrivilege-equivalent rights on a domain controller; the failure is logged, and the attacker pivots to first escalating to a domain-level account before retrying.",
+        "log": "An attempt to add SID History to an account failed.\n\nSubject:\n\tSecurity ID:\t\tCORP\\svc_helper02\n\tAccount Name:\t\tsvc_helper02\n\tAccount Domain:\t\tCORP\n\tLogon ID:\t\t0x9A11D02\n\nTarget Account:\n\tSecurity ID:\t\tCORP\\svc_helper02\n\tAccount Name:\t\tsvc_helper02\n\tAccount Domain:\t\tCORP\n\nSource Account:\n\tAccount Name:\t\t-\n\nAdditional Information:\n\tPrivileges:\t\t-"
+      },
+      "investigation_steps": [
+        "Treat any 4766 outside a known migration window as an active SID History injection attempt and investigate the Subject account's recent activity and privilege level.",
+        "Check for a subsequent successful 4765 from the same Subject or Target Account, which would indicate the attacker eventually succeeded.",
+        "Review what rights the Subject account currently holds versus what would be required to succeed, to understand how close the attacker is to success.",
+        "Correlate with recent logons (4624) and any privilege-assignment events (4704) for the Subject account around the same time."
+      ],
+      "false_positives": [
+        "Misconfigured or partially set up ADMT migration tooling generating failures before the environment is fully prepared"
+      ],
+      "attack_techniques": [
+        {
+          "id": "T1134.005",
+          "name": "Access Token Manipulation: SID-History Injection"
+        }
+      ],
+      "detection_query": "SecurityEvent\n| where EventID == 4766",
+      "related_attacks": [
+        "Attempted SID History injection for privilege escalation, blocked by insufficient rights",
+        "Reconnaissance/testing phase preceding a successful Golden Ticket + SID History attack"
+      ],
+      "artifektx_links": [],
+      "related_ids": [
+        "4765",
+        "4706",
+        "4672"
+      ]
+    },
+    {
+      "id": "4794",
+      "name": "An attempt was made to set the Directory Services Restore Mode administrator password",
+      "log_source": "Security",
+      "category": "Account Management",
+      "priority": "Critical",
+      "description": "Logged on a domain controller whenever the local Directory Services Restore Mode (DSRM) administrator password is set, typically via ntdsutil. The DSRM account is a local SAM account baked into every DC that exists outside normal Active Directory authentication and auditing, and by default is rarely touched -- making this one of the highest-signal, lowest-volume events an AD environment can monitor. Microsoft's own guidance is to always alert on this event.",
+      "key_fields": [
+        {
+          "field": "Subject > Account Name",
+          "meaning": "The account that made the password-set attempt."
+        },
+        {
+          "field": "Additional Information > Caller Workstation",
+          "meaning": "The computer the change request came from; matches the local DC's own name if performed locally, on the console."
+        },
+        {
+          "field": "Additional Information > Status Code",
+          "meaning": "0x0 for a successful password set; a nonzero value on a failure event."
+        }
+      ],
+      "normal_baseline": "Should occur only during planned DC builds or scheduled DSRM password rotations as part of a documented security maintenance process; effectively zero baseline volume otherwise.",
+      "sample_log": "An attempt was made to set the Directory Services Restore Mode administrator password.\n\nSubject:\n\tSecurity ID:\t\tCORP\\dadmin\n\tAccount Name:\t\tdadmin\n\tAccount Domain:\t\tCORP\n\tLogon ID:\t\t0x36f67\n\nAdditional Information:\n\tCaller Workstation:\tDC01\n\tStatus Code:\t\t0x0",
+      "anomalies": [
+        "Any 4794 outside a documented DC build or scheduled DSRM password rotation window",
+        "A Caller Workstation that doesn't match the DC where the event was logged, suggesting a remote-initiated change",
+        "A 4794 followed by a registry change to HKLM\\SYSTEM\\CurrentControlSet\\Control\\Lsa\\DsrmAdminLogonBehavior (surfaced as a 4657 if audited), which would let the DSRM account authenticate over the network"
+      ],
+      "attack_example": {
+        "scenario": "An attacker who has already achieved Domain Admin extracts the DSRM account's password hash and sets the DsrmAdminLogonBehavior registry value to 2, then uses pass-the-hash with the DSRM hash to authenticate to the domain controller directly -- a persistence path that survives even a full krbtgt password reset, since the DSRM account lives in the DC's local SAM, not Active Directory.",
+        "log": "An attempt was made to set the Directory Services Restore Mode administrator password.\n\nSubject:\n\tSecurity ID:\t\tCORP\\svc_backup\n\tAccount Name:\t\tsvc_backup\n\tAccount Domain:\t\tCORP\n\tLogon ID:\t\t0x9A11C40\n\nAdditional Information:\n\tCaller Workstation:\tDC01\n\tStatus Code:\t\t0x0"
+      },
+      "investigation_steps": [
+        "Treat every 4794 as a priority alert per Microsoft's own recommendation; confirm it against a documented, scheduled DSRM maintenance window.",
+        "Check Caller Workstation against the DC that logged the event; a mismatch suggests the change was initiated remotely rather than at the console.",
+        "Check for a related registry change to DsrmAdminLogonBehavior around the same time (via 4657 if the key is audited), since a password set alone is far less dangerous than one paired with enabling network logon for the DSRM account.",
+        "If unauthorized, immediately reset the DSRM password again, set DsrmAdminLogonBehavior back to its default, and treat the acting account's session as compromised."
+      ],
+      "false_positives": [
+        "Scheduled DSRM password rotation performed by AD administrators as part of standard DC hardening practice",
+        "New domain controller promotion, which requires setting the DSRM password during dcpromo/Install-ADDSDomainController"
+      ],
+      "attack_techniques": [
+        {
+          "id": "T1550.002",
+          "name": "Use Alternate Authentication Material: Pass the Hash"
+        }
+      ],
+      "detection_query": "SecurityEvent\n| where EventID == 4794",
+      "related_attacks": [
+        "DSRM account persistence (pass-the-hash against the local DC SAM account, bypassing normal AD authentication and krbtgt resets)",
+        "Domain controller compromise investigations where the DSRM account is repurposed as a resilient backdoor"
+      ],
+      "artifektx_links": [
+        {
+          "id": "sam-hive",
+          "name": "SAM (Security Account Manager) Hive"
+        }
+      ],
+      "related_ids": [
+        "4657",
+        "4672"
+      ]
+    },
+    {
+      "id": "4798",
+      "name": "A user's local group membership was enumerated",
+      "log_source": "Security",
+      "category": "Account Management",
+      "priority": "Low",
+      "description": "Logged when a process enumerates the local groups a specific user belongs to, such as opening a user's properties in Computer Management or running 'net user <name>'. Individually low-value, but a sudden spike across many accounts from one host or process is a classic sign of post-compromise account reconnaissance.",
+      "key_fields": [
+        {
+          "field": "Subject > Account Name",
+          "meaning": "The account that performed the enumeration."
+        },
+        {
+          "field": "User > Account Name",
+          "meaning": "The account whose local group membership was enumerated."
+        },
+        {
+          "field": "Process Information > Process Name",
+          "meaning": "The executable that performed the enumeration, e.g. mmc.exe, net.exe, or an unfamiliar tool."
+        }
+      ],
+      "normal_baseline": "Routine, low-volume activity from help-desk and IT-admin use of Computer Management or 'net user' for individual account troubleshooting; does not fire for enumeration done through the Active Directory Users and Computers snap-in.",
+      "sample_log": "A user's local group membership was enumerated.\n\nSubject:\n\tSecurity ID:\t\tCORP\\jdoe.admin\n\tAccount Name:\t\tjdoe.admin\n\tAccount Domain:\t\tCORP\n\tLogon ID:\t\t0x4B7C102\n\nUser:\n\tSecurity ID:\t\tCORP\\m.reyes\n\tAccount Name:\t\tm.reyes\n\tAccount Domain:\t\tCORP\n\nProcess Information:\n\tProcess ID:\t\t0x9a4\n\tProcess Name:\t\tC:\\Windows\\System32\\mmc.exe",
+      "anomalies": [
+        "A rapid, scripted sequence of 4798 events against many different user accounts from a single host in a short window",
+        "Process Name is something other than expected admin tooling (net.exe, mmc.exe) -- e.g. a custom or scripting-language binary",
+        "Enumeration performed by an account with no help-desk or admin responsibilities"
+      ],
+      "attack_example": {
+        "scenario": "After landing on a workstation, an attacker runs a lightweight recon script that iterates through every local user account calling 'net user <name>' to map out group memberships and identify which local accounts carry administrative rights, ahead of a targeted lateral-movement attempt.",
+        "log": "A user's local group membership was enumerated.\n\nSubject:\n\tSecurity ID:\t\tCORP\\jsmith\n\tAccount Name:\t\tjsmith\n\tAccount Domain:\t\tCORP\n\tLogon ID:\t\t0x8A22F10\n\nUser:\n\tSecurity ID:\t\tWKS-042\\localadmin\n\tAccount Name:\t\tlocaladmin\n\tAccount Domain:\t\tWKS-042\n\nProcess Information:\n\tProcess ID:\t\t0x1a4c\n\tProcess Name:\t\tC:\\Windows\\System32\\net.exe"
+      },
+      "investigation_steps": [
+        "Check event frequency and breadth: a handful of lookups tied to one ticket is routine; a burst across many accounts from one host/process is not.",
+        "Confirm Process Name matches expected administrative tooling; script hosts or unfamiliar binaries performing bulk enumeration are the strongest signal.",
+        "Check whether the Subject account normally performs user-administration tasks; a standard end-user account doing this is unusual.",
+        "Correlate with subsequent logon attempts (4624/4625) against any accounts identified as having elevated local group membership."
+      ],
+      "false_positives": [
+        "Help-desk staff opening Computer Management to check a single user's group membership as part of routine troubleshooting",
+        "Endpoint management/inventory tools that periodically enumerate local account and group state as part of compliance scanning"
+      ],
+      "attack_techniques": [
+        {
+          "id": "T1069.001",
+          "name": "Permission Groups Discovery: Local Groups"
+        }
+      ],
+      "detection_query": "SecurityEvent\n| where EventID == 4798\n| summarize EnumeratedAccounts = dcount(TargetUserName) by SubjectUserName, Computer, bin(TimeGenerated, 5m)\n| where EnumeratedAccounts > 10",
+      "related_attacks": [
+        "Post-compromise local account and privilege reconnaissance",
+        "Precursor activity to targeted lateral movement or local privilege escalation"
+      ],
+      "artifektx_links": [],
+      "related_ids": [
+        "4799",
+        "4672",
+        "4624"
+      ]
+    },
+    {
+      "id": "4799",
+      "name": "A security-enabled local group membership was enumerated",
+      "log_source": "Security",
+      "category": "Account Management",
+      "priority": "Low",
+      "description": "Logged when a process enumerates the membership list of a local security group, such as viewing the local Administrators group in Computer Management or running 'net localgroup administrators'. Like 4798, it is individually benign but valuable in aggregate as a marker of account/privilege discovery activity.",
+      "key_fields": [
+        {
+          "field": "Subject > Account Name",
+          "meaning": "The account that performed the enumeration."
+        },
+        {
+          "field": "Group > Group Name / Group Domain",
+          "meaning": "The local group whose membership was enumerated, e.g. Administrators."
+        },
+        {
+          "field": "Process Information > Process Name",
+          "meaning": "The executable that performed the enumeration."
+        }
+      ],
+      "normal_baseline": "Routine, low-volume activity from IT tooling and admins checking local Administrators/Remote Desktop Users membership; does not fire for enumeration via the Active Directory Users and Computers snap-in.",
+      "sample_log": "A security-enabled local group membership was enumerated.\n\nSubject:\n\tSecurity ID:\t\tCORP\\jdoe.admin\n\tAccount Name:\t\tjdoe.admin\n\tAccount Domain:\t\tCORP\n\tLogon ID:\t\t0x4B7C102\n\nGroup:\n\tSecurity ID:\t\tBUILTIN\\Administrators\n\tGroup Name:\t\tAdministrators\n\tGroup Domain:\t\tBuiltin\n\nProcess Information:\n\tProcess ID:\t\t0x9a4\n\tProcess Name:\t\tC:\\Windows\\System32\\mmc.exe",
+      "anomalies": [
+        "Repeated enumeration of the local Administrators or Remote Desktop Users group across many hosts from a single account in a short window",
+        "Process Name other than expected admin tooling",
+        "Enumeration performed by an account with no legitimate reason to inventory local privileged group membership"
+      ],
+      "attack_example": {
+        "scenario": "As part of the same post-compromise reconnaissance sweep, an attacker's script runs 'net localgroup administrators' across every reachable workstation to build a map of which local accounts hold admin rights machine-by-machine, informing where to attempt lateral movement next.",
+        "log": "A security-enabled local group membership was enumerated.\n\nSubject:\n\tSecurity ID:\t\tCORP\\jsmith\n\tAccount Name:\t\tjsmith\n\tAccount Domain:\t\tCORP\n\tLogon ID:\t\t0x8A22F10\n\nGroup:\n\tSecurity ID:\t\tWKS-042\\Administrators\n\tGroup Name:\t\tAdministrators\n\tGroup Domain:\t\tWKS-042\n\nProcess Information:\n\tProcess ID:\t\t0x1a4c\n\tProcess Name:\t\tC:\\Windows\\System32\\net.exe"
+      },
+      "investigation_steps": [
+        "Check event frequency and host breadth: enumeration of one group on one machine is routine; the same account doing it across many hosts is not.",
+        "Confirm Process Name against expected admin tooling.",
+        "Check whether the Subject account normally performs this kind of administrative inventory task.",
+        "Correlate with 4798 activity from the same account/host in the same window, since both often appear together in recon scripts."
+      ],
+      "false_positives": [
+        "IT staff or endpoint management tooling routinely auditing local Administrators group membership across the fleet",
+        "Compliance/vulnerability scanning tools that enumerate privileged local group membership as part of a scheduled scan"
+      ],
+      "attack_techniques": [
+        {
+          "id": "T1069.001",
+          "name": "Permission Groups Discovery: Local Groups"
+        }
+      ],
+      "detection_query": "SecurityEvent\n| where EventID == 4799\n| summarize EnumeratedHosts = dcount(Computer) by SubjectUserName, bin(TimeGenerated, 15m)\n| where EnumeratedHosts > 10",
+      "related_attacks": [
+        "Post-compromise privileged local account discovery across multiple hosts",
+        "Precursor activity to targeted lateral movement using discovered local admin credentials"
+      ],
+      "artifektx_links": [],
+      "related_ids": [
+        "4798",
+        "4672",
+        "4624"
+      ]
+    },
+    {
+      "id": "4611",
+      "name": "A trusted logon process has been registered with the Local Security Authority",
+      "log_source": "Security",
+      "category": "Credential Access",
+      "priority": "Critical",
+      "description": "Logged when a logon process registers with the Local Security Authority (LSA) and LSA confirms it as trusted, after which the process is allowed to submit logon requests on behalf of users. It fires routinely at OS startup for the small, fixed set of built-in logon processes (Winlogon, Schannel, KSecDD, etc.), which is exactly what makes an unexpected registration so significant: LSA is the trust anchor for all authentication on the machine, and a rogue registered logon process is a documented technique behind Skeleton Key-style domain controller backdoors.",
+      "key_fields": [
+        {
+          "field": "Subject > Account Name",
+          "meaning": "The account that registered the process; expected to be SYSTEM (S-1-5-18) essentially every time."
+        },
+        {
+          "field": "Logon Process Name",
+          "meaning": "The name of the newly registered logon process, e.g. Winlogon, Schannel, or Kerberos."
+        }
+      ],
+      "normal_baseline": "A short burst at every system startup for the OS's built-in logon processes, then rare-to-never for the rest of uptime; Microsoft's own guidance is to report this event whenever the Subject is anything other than SYSTEM.",
+      "sample_log": "A trusted logon process has been registered with the Local Security Authority.\n\nSubject:\n\tSecurity ID:\t\tS-1-5-18\n\tAccount Name:\t\tDC01$\n\tAccount Domain:\t\tCORP\n\tLogon ID:\t\t0x3E7\n\nLogon Process Name:\tKerberos",
+      "anomalies": [
+        "Subject Account Name/Security ID is anything other than SYSTEM (S-1-5-18)",
+        "Logon Process Name does not match the small, known set of built-in Windows logon processes for that server role",
+        "A new 4611 occurring well after startup with no corresponding service restart or patch to explain it, especially on a domain controller"
+      ],
+      "attack_example": {
+        "scenario": "An attacker who has gained SYSTEM-level access to a domain controller injects a Skeleton Key-style patch into LSASS that registers itself as an additional authentication package, causing authentication to succeed with either the real password or a single attacker-defined master password for any domain account, all while normal 4624 logons continue to look unremarkable.",
+        "log": "A trusted logon process has been registered with the Local Security Authority.\n\nSubject:\n\tSecurity ID:\t\tS-1-5-18\n\tAccount Name:\t\tDC01$\n\tAccount Domain:\t\tCORP\n\tLogon ID:\t\t0x3E7\n\nLogon Process Name:\tmskrbtc"
+      },
+      "investigation_steps": [
+        "Confirm Subject Account Name is SYSTEM; if not, treat this as a critical, likely process-injection-level compromise.",
+        "Compare Logon Process Name against the known-good list of logon processes for that specific server role and OS build; flag anything unrecognized.",
+        "Check whether the event timing aligns with a legitimate reboot, patch, or service restart, or occurred in isolation mid-session.",
+        "On domain controllers specifically, treat an unexplained new logon process registration as a potential Skeleton Key indicator and inspect LSASS for unsigned or unexpected module loads."
+      ],
+      "false_positives": [
+        "Normal system startup, which registers the standard set of built-in logon processes",
+        "Legitimate third-party SSP/AP (Security Support Provider/Authentication Package) software, such as certain smart-card or federation solutions, registering its own logon process after installation"
+      ],
+      "attack_techniques": [
+        {
+          "id": "T1556.001",
+          "name": "Modify Authentication Process: Domain Controller Authentication"
+        }
+      ],
+      "detection_query": "SecurityEvent\n| where EventID == 4611\n| where SubjectUserSid != \"S-1-5-18\"",
+      "related_attacks": [
+        "Skeleton Key malware (LSASS patch enabling a master password for all domain accounts)",
+        "Rogue authentication package/logon process registration for credential-theft persistence on a domain controller"
+      ],
+      "artifektx_links": [],
+      "related_ids": [
+        "4614",
+        "4672"
+      ]
+    },
+    {
+      "id": "4614",
+      "name": "A notification package has been loaded by the Security Account Manager",
+      "log_source": "Security",
+      "category": "Credential Access",
+      "priority": "High",
+      "description": "Logged each time a password-filter notification package DLL is loaded by the SAM/LSA. Notification packages are invoked on every password change and receive the new password in cleartext before it is hashed, which is exactly what makes this feature attractive to abuse: a malicious notification package registered here (the real-world mechanism behind well-documented password-filter credential-theft malware) silently captures every password change domain-wide.",
+      "key_fields": [
+        {
+          "field": "Notification Package Name",
+          "meaning": "The name of the DLL that was loaded as a password-change notification package, e.g. scecli, RASSFM, WDIGEST, KDCSVC, or a third-party/rogue entry."
+        }
+      ],
+      "normal_baseline": "Fires at startup for the small set of standard, built-in notification packages; the list of loaded package names should exactly match a known-good baseline for that OS build and any deliberately installed password-sync product.",
+      "sample_log": "A notification package has been loaded by the Security Account Manager.\n\nNotification Package Name:\tscecli",
+      "anomalies": [
+        "A Notification Package Name not present in the organization's documented baseline of expected packages",
+        "A new, unrecognized DLL name appearing in this event outside of a planned software install (e.g. a password-sync or identity-bridge product)",
+        "The event appearing well after startup, unexplained by any service restart or software deployment"
+      ],
+      "attack_example": {
+        "scenario": "An attacker with local admin rights on a domain controller registers a malicious DLL as an LSA notification package (adding it to the Notification Packages registry value), so that every subsequent domain password change is silently captured in cleartext and written out to a file the attacker later retrieves, all without ever touching LSASS memory or triggering a credential-dumping alert.",
+        "log": "A notification package has been loaded by the Security Account Manager.\n\nNotification Package Name:\tpwfilter64"
+      },
+      "investigation_steps": [
+        "Compare Notification Package Name against the documented baseline list for that server's OS build and installed software.",
+        "For any unrecognized package name, locate the corresponding DLL referenced under HKLM\\SYSTEM\\CurrentControlSet\\Control\\Lsa\\Notification Packages and inspect it directly (signature, hash, install/write time).",
+        "Check whether the timing of the event correlates with a documented software installation or maintenance window.",
+        "If a rogue package is confirmed, assume every password changed since it was loaded has been captured and force a full credential reset."
+      ],
+      "false_positives": [
+        "Legitimate password-synchronization or identity-bridge software (e.g. cloud directory sync tools) that deliberately registers as a notification package",
+        "Normal startup loading of standard built-in packages after a patch or reboot"
+      ],
+      "attack_techniques": [
+        {
+          "id": "T1556.002",
+          "name": "Modify Authentication Process: Password Filter DLL"
+        }
+      ],
+      "detection_query": "SecurityEvent\n| where EventID == 4614\n| where NotificationPackageName !in (KnownGoodNotificationPackages)",
+      "related_attacks": [
+        "Password filter DLL credential-theft malware capturing cleartext passwords at every change",
+        "Domain-wide credential harvesting without touching LSASS memory or triggering traditional dumping detections"
+      ],
+      "artifektx_links": [],
+      "related_ids": [
+        "4611",
+        "4657"
+      ]
+    },
+    {
+      "id": "5379",
+      "name": "Credential Manager credentials were read",
+      "log_source": "Security",
+      "category": "Credential Access",
+      "priority": "High",
+      "description": "Logged when a user or process performs a read operation against stored credentials in Windows Credential Manager, the DPAPI-protected store used for saved RDP connections, mapped drives, and other 'remember my credentials' scenarios. Bulk or out-of-context reads are a recognized indicator of credential-harvesting tools enumerating the vault rather than a single application retrieving its own saved secret.",
+      "key_fields": [
+        {
+          "field": "Subject > Account Name / Account Domain",
+          "meaning": "The account context under which the credential read occurred."
+        },
+        {
+          "field": "Subject > Logon ID",
+          "meaning": "Correlates the read back to the originating logon session (4624)."
+        },
+        {
+          "field": "Read Operation",
+          "meaning": "Indicates the vault read action was performed; paired with 5378 (delegation disallowed) and 5380 (Vault Find Credential) in the same subcategory."
+        }
+      ],
+      "normal_baseline": "Low-volume and tied to specific, expected user actions, such as an RDP client auto-filling a saved connection's credentials or an application retrieving a credential it previously stored.",
+      "sample_log": "Credential Manager credentials were read.\n\nSubject:\n\tSecurity ID:\t\tCORP\\jsmith\n\tAccount Name:\t\tjsmith\n\tAccount Domain:\t\tCORP\n\tLogon ID:\t\t0x8A22F10\n\nRead Operation:\tVault Credential Read",
+      "anomalies": [
+        "A burst of 5379 events across many stored credentials in a short window, consistent with bulk vault enumeration rather than a single application's normal lookup",
+        "The read occurring under a Logon ID/session that doesn't match the account that originally saved the credential",
+        "Correlated process activity consistent with known credential-harvesting tools (vaultcmd.exe enumeration, rundll32.exe keymgr.dll KRShowKeyMgr, or third-party vault-dumping utilities) around the same time"
+      ],
+      "attack_example": {
+        "scenario": "After compromising a workstation, an attacker runs a vault-dumping tool that walks every entry in Windows Credential Manager, harvesting saved RDP and mapped-drive credentials the logged-on user had chosen to remember, to use for lateral movement without needing to touch LSASS memory.",
+        "log": "Credential Manager credentials were read.\n\nSubject:\n\tSecurity ID:\t\tCORP\\jsmith\n\tAccount Name:\t\tjsmith\n\tAccount Domain:\t\tCORP\n\tLogon ID:\t\t0x8A22F10\n\nRead Operation:\tVault Credential Read"
+      },
+      "investigation_steps": [
+        "Correlate the Logon ID back to its 4624 to confirm the session context and originating host for the read.",
+        "Check for volume: a handful of reads tied to normal application use is expected; a rapid sweep across many stored entries is not.",
+        "Look for correlated process creation (4688) around the same time for known vault-enumeration tools or unusual process names accessing Credential Manager paths.",
+        "If harvesting is confirmed, identify which saved credentials were exposed and rotate them, prioritizing any that grant remote access (RDP, mapped drives to sensitive shares)."
+      ],
+      "false_positives": [
+        "Normal RDP client or mapped-network-drive behavior auto-filling a credential the user previously chose to save",
+        "Applications and browsers legitimately retrieving credentials they registered with Credential Manager during normal operation"
+      ],
+      "attack_techniques": [
+        {
+          "id": "T1555.004",
+          "name": "Credentials from Password Stores: Windows Credential Manager"
+        }
+      ],
+      "detection_query": "SecurityEvent\n| where EventID == 5379\n| summarize ReadCount = count() by SubjectUserName, Computer, bin(TimeGenerated, 5m)\n| where ReadCount > 5",
+      "related_attacks": [
+        "Credential Manager / Windows Vault harvesting (e.g. via Mimikatz vault::cred, VaultPasswordView, SharpDPAPI)",
+        "Lateral movement using stolen saved RDP or mapped-drive credentials"
+      ],
+      "artifektx_links": [
+        {
+          "id": "credential-manager-vault",
+          "name": "Credential Manager Vault"
+        }
+      ],
+      "related_ids": [
+        "4624",
+        "4688"
+      ]
+    },
+    {
+      "id": "4647",
+      "name": "User initiated logoff",
+      "log_source": "Security",
+      "category": "Authentication",
+      "priority": "Low",
+      "description": "Logged when a user actively initiates a logoff from an interactive or RemoteInteractive (RDP) session, effectively taking the place of 4634 for those two logon types even if the token's reference count means the session isn't fully destroyed the instant the event fires. Useful mainly for accurately bounding session duration and distinguishing a deliberate logoff from a dropped or idle-terminated session.",
+      "key_fields": [
+        {
+          "field": "Subject > Account Name / Account Domain",
+          "meaning": "The account that initiated the logoff."
+        },
+        {
+          "field": "Subject > Logon ID",
+          "meaning": "Matches the Logon ID from the originating 4624, letting an analyst compute the session's actual duration."
+        }
+      ],
+      "normal_baseline": "High-volume and routine, tracking one-to-one with every deliberate interactive or RDP sign-out throughout the day.",
+      "sample_log": "User initiated logoff.\n\nSubject:\n\tSecurity ID:\t\tCORP\\jsmith\n\tAccount Name:\t\tjsmith\n\tAccount Domain:\t\tCORP\n\tLogon ID:\t\t0x8A22F10",
+      "anomalies": [
+        "A 4647 with no matching prior 4624 for the same Logon ID, suggesting a log gap or tampering",
+        "An RDP session logoff at a time inconsistent with the account's normal working pattern, when reviewed alongside other suspicious activity on the same session",
+        "A very short interval between the matching 4624 and this 4647 on a sensitive account, which can indicate an automated or scripted logon rather than genuine interactive use"
+      ],
+      "attack_example": {
+        "scenario": "An attacker uses stolen RDP credentials to briefly log on to a jump host, run a quick reconnaissance command, and log off within seconds -- the short 4624-to-4647 interval on an account that normally has multi-hour interactive sessions is the anomaly worth flagging, not the logoff event itself.",
+        "log": "User initiated logoff.\n\nSubject:\n\tSecurity ID:\t\tCORP\\svc_helper02\n\tAccount Name:\t\tsvc_helper02\n\tAccount Domain:\t\tCORP\n\tLogon ID:\t\t0x9A11D02"
+      },
+      "investigation_steps": [
+        "Correlate the Logon ID back to its originating 4624 to compute actual session duration.",
+        "For sensitive or privileged accounts, compare session duration and time-of-day against the account's established baseline.",
+        "If investigating a broader incident, use 4647 as the authoritative session-end marker for interactive/RDP sessions instead of relying on 4634, which does not reliably fire for those logon types."
+      ],
+      "false_positives": [
+        "Normal, expected end-of-session logoffs throughout the business day",
+        "Automated session cleanup by RDP session brokers or VDI infrastructure performing routine sign-outs"
+      ],
+      "attack_techniques": [],
+      "detection_query": "SecurityEvent\n| where EventID == 4647\n| join kind=inner (SecurityEvent | where EventID == 4624) on $left.TargetLogonId == $right.TargetLogonId\n| extend SessionDuration = TimeGenerated - TimeGenerated1\n| where SessionDuration < 30s",
+      "related_attacks": [
+        "Rapid logon/logoff patterns consistent with scripted or automated abuse of stolen credentials on a sensitive host"
+      ],
+      "artifektx_links": [],
+      "related_ids": [
+        "4624",
+        "4634"
       ]
     }
   ]
